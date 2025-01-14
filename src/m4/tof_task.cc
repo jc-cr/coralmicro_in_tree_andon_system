@@ -188,14 +188,6 @@ namespace coralmicro {
         (void)parameters;
         uint8_t status;
         
-        // Add stack checking
-        #if ( configCHECK_FOR_STACK_OVERFLOW > 0 )
-        volatile StackType_t *highWaterMark;
-        highWaterMark = uxTaskGetStackHighWaterMark(nullptr);
-        printf("Initial stack high water mark: %u words\r\n", 
-            static_cast<unsigned>(highWaterMark));
-        #endif
-        
         printf("TOF task starting...\r\n");
         fflush(stdout);
         

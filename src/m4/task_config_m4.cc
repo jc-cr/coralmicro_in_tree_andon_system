@@ -7,6 +7,7 @@
 // Task implementations
 #include "m4/camera_task.hh"
 #include "m4/m4_ipc_task.hh"
+#include "m4/tof_task.hh"
 
 namespace coralmicro {
 namespace {
@@ -25,6 +26,14 @@ constexpr TaskConfig kM4TaskConfigs[] = {
         camera_task,
         "Camera_Task",
         STACK_SIZE_LARGE,
+        0,
+        TASK_PRIORITY_MEDIUM,
+        nullptr
+    },
+    {
+        tof_task,
+        "TOF_Task",
+        STACK_SIZE_MEDIUM,
         0,
         TASK_PRIORITY_MEDIUM,
         nullptr
