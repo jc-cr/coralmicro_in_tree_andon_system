@@ -8,11 +8,11 @@ add_subdirectory(libs/coralmicro_VL53L8CX_ULD_driver)
 set(M4_TASK_SOURCES
     src/m4/camera_task.cc
     src/m4/m4_ipc_task.cc
-    src/m4/tof_task.cc
 )
 
 set(M7_TASK_SOURCES
     src/m7/inference_task.cc
+    src/m7/tof_task.cc
     src/m7/rgb_task.cc
     src/m7/m7_ipc_task.cc
     src/m7/rpc_task.cc

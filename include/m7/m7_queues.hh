@@ -50,23 +50,23 @@ namespace coralmicro {
 
 
     // Queue handles
-    inline QueueHandle_t g_ipc_tof_queue_m7;      // Latest TOF frame
+    inline QueueHandle_t g_tof_queue_m7;      // Latest TOF frame
     inline QueueHandle_t g_ipc_camera_queue_m7;  // Latest camera frame from IPC transfer
     inline QueueHandle_t g_inference_queue_m7;   // Latest inference results
 
 
     // Queue creation
     inline bool InitQueues() {
-        g_ipc_tof_queue_m7 = xQueueCreate(1, sizeof(VL53L8CX_ResultsData));
+        g_tof_queue_m7 = xQueueCreate(1, sizeof(VL53L8CX_ResultsData));
         g_ipc_camera_queue_m7 = xQueueCreate(1, sizeof(CameraData));
         g_inference_queue_m7 = xQueueCreate(1, sizeof(InferenceData));
         
-        return (g_ipc_tof_queue_m7 != nullptr && g_ipc_camera_queue_m7 != nullptr && g_inference_queue_m7 != nullptr);
+        return (g_tof_queue_m7 != nullptr && g_ipc_camera_queue_m7 != nullptr && g_inference_queue_m7 != nullptr);
     }
 
     // Queue cleanup
     inline void CleanupQueues() {
-        if (g_ipc_tof_queue_m7) vQueueDelete(g_tof_queue_m7);
+        if (g_tof_queue_m7) vQueueDelete(g_tof_queue_m7);
         if (g_ipc_camera_queue_m7) vQueueDelete(g_ipc_camera_queue_m7);
         if (g_inference_queue_m7) vQueueDelete(g_inference_queue_m7);
     }

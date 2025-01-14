@@ -1,5 +1,5 @@
 // tof_task.cc
-#include "m4/tof_task.hh"
+#include "m7/tof_task.hh"
 
 namespace coralmicro {
 
@@ -248,7 +248,7 @@ namespace coralmicro {
             if (status == VL53L8CX_STATUS_OK && isReady) {
                 status = vl53l8cx_get_ranging_data(dev.get(), results.get());
                 if (status == VL53L8CX_STATUS_OK) {
-                    xQueueOverwrite(TofTaskQueues::output_queue, results.get());  // Always keep latest frame
+                    xQueueOverwrite(*TofTaskQueues::output_queue, results.get());
                 } else {
                     print_sensor_error("getting ranging data", status);
                 }

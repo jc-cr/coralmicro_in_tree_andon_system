@@ -18,7 +18,7 @@ extern "C" {
 #include <stdio.h>
 #include <memory>
 
-#include "m4/m4_queues.hh"
+#include "m7/m7_queues.hh"
 
 namespace coralmicro {
     // Task
@@ -36,7 +36,7 @@ namespace coralmicro {
 
     // Constants
     struct TofTaskQueues {
-        static constexpr QueueHandle_t* output_queue = &g_tof_queue_m4;
+        static constexpr QueueHandle_t* output_queue = &g_tof_queue_m7;
     };
 
 

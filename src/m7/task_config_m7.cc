@@ -8,6 +8,7 @@
 #include "m7/inference_task.hh"
 #include "m7/m7_ipc_task.hh"
 #include "m7/rpc_task.hh"
+#include "m7/tof_task.hh"
 
 namespace coralmicro {
 namespace {
@@ -22,6 +23,14 @@ struct TaskConfig {
 };
 
 constexpr TaskConfig kM7TaskConfigs[] = {
+    {
+        tof_task,
+        "TOF_Task",
+        STACK_SIZE_MEDIUM,
+        0,
+        TASK_PRIORITY_MEDIUM,
+        nullptr
+    },
     {
         inference_task,
         "Inference_Task",
