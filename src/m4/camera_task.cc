@@ -13,33 +13,33 @@ namespace coralmicro {
         CameraTask::GetSingleton()->Enable(CameraMode::kStreaming);
 
         // Main task loop
+        CameraData camera_data;
+        camera_data.width = CameraConfig::kWidth;
+        camera_data.height = CameraConfig::kHeight;
+        camera_data.format = CameraConfig::kFormat;
+
         while (true) {
             // Create new camera data instance
-            CameraData camera_data;
-            camera_data.width = 324;
-            camera_data.height = 324;
-            camera_data.format = CameraFormat::kRgb;
             camera_data.timestamp = xTaskGetTickCount();
-            
-            // Use vector directly like in the example
+             
             camera_data.image_data->resize(
                 camera_data.width * camera_data.height * 
                 CameraFormatBpp(camera_data.format));
 
             CameraFrameFormat fmt{
                 camera_data.format,
-                CameraFilterMethod::kBilinear,
-                CameraRotation::k270,
+                CameraConfig::filter,
+                CameraConfig::rotation,
                 static_cast<int>(camera_data.width),
                 static_cast<int>(camera_data.height),
                 false,
                 camera_data.image_data->data(),
-                false  // auto white balance off
+                CameraConfig::auto_white_balance
             };
 
             if (CameraTask::GetSingleton()->GetFrame({fmt})) {
                 // Now safe to send to queue
-                if (xQueueOverwrite(g_camera_queue_m4, &camera_data) != pdTRUE) {
+                if (xQueueOverwrite(*CameraTaskQueues::output_queue, &camera_data) != pdTRUE) {
                     printf("Failed to send camera data to queue\r\n");
                 }
             } else {

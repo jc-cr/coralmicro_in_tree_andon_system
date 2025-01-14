@@ -1,14 +1,19 @@
+// m4_queues.hh
 #pragma once
+
+
+#include <vector>
+#include <memory>
 
 #include "third_party/freertos_kernel/include/FreeRTOS.h"
 #include "third_party/freertos_kernel/include/queue.h"
 #include "libs/camera/camera.h"
-#include <vector>
-#include <memory>
+
+
 
 namespace coralmicro {
 
-// Structure for camera data
+// Queue data structures
 struct CameraData {
     uint32_t width;
     uint32_t height;
@@ -20,13 +25,14 @@ struct CameraData {
 };
 
 // Queue handles
-inline QueueHandle_t g_camera_queue_m4;    // Latest camera frame
+inline QueueHandle_t g_camera_queue_m4;      // Latest camera frame
 
 // Queue creation
 inline bool InitQueues() {
     g_camera_queue_m4 = xQueueCreate(1, sizeof(CameraData));
-    
+
     return (g_camera_queue_m4 != nullptr);
+    
 }
 
 // Queue cleanup

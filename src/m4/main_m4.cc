@@ -1,15 +1,13 @@
 #include "third_party/freertos_kernel/include/FreeRTOS.h"
 #include "third_party/freertos_kernel/include/task.h"
+#include "libs/base/main_freertos_m4.h"
 
 #include "m4/m4_queues.hh"
 
 #include "m4/task_config_m4.hh"
-#include "logo.hh"
 
 namespace coralmicro {
 namespace {
-
-const char* PROJECT_NAME = "PCB Bringup";
 
 void setup_tasks() {
     printf("Starting M4 task creation...\r\n");
