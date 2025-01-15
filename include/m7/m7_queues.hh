@@ -25,8 +25,8 @@ extern "C" {
 
 namespace coralmicro {
 
+    // Data structures
 
-    // Structure for camera data
     struct CameraData {
         uint32_t width;
         uint32_t height;
@@ -36,7 +36,6 @@ namespace coralmicro {
 
         CameraData() : image_data(std::make_shared<std::vector<uint8_t>>()) {}
     };
-
 
     struct InferenceData {
         uint32_t model_width;
@@ -48,6 +47,12 @@ namespace coralmicro {
         InferenceData() : camera_data() {}
     };
 
+    struct TofData {
+        VL53L8CX_ResultsData tof_results;
+        TickType_t timestamp;
+    };
+
+
 
     // Queue handles
     inline QueueHandle_t g_tof_queue_m7;      // Latest TOF frame
@@ -57,7 +62,7 @@ namespace coralmicro {
 
     // Queue creation
     inline bool InitQueues() {
-        g_tof_queue_m7 = xQueueCreate(1, sizeof(VL53L8CX_ResultsData));
+        g_tof_queue_m7 = xQueueCreate(1, sizeof(TofData));
         g_ipc_camera_queue_m7 = xQueueCreate(1, sizeof(CameraData));
         g_inference_queue_m7 = xQueueCreate(1, sizeof(InferenceData));
         
