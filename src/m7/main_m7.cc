@@ -2,10 +2,13 @@
 #include "third_party/freertos_kernel/include/FreeRTOS.h"
 #include "third_party/freertos_kernel/include/task.h"
 
-#include "m7/m7_queues.hh"
 
 #include "m7/task_config_m7.hh"
+#include "m7/m7_queues.hh"
+
+#include "system_state.hh"
 #include "logo.hh"
+
 
 namespace coralmicro {
 namespace {
@@ -19,7 +22,7 @@ void setup_tasks() {
     // BOOL return type
     if (!InitQueues()) {
         printf("Failed to initialize queues\r\n");
-        vTaskSuspend(nullptr);
+        update_state_event_m7(TaskID::M7_MAIN, SystemEvents::BOOT_FAIL);
     }
     
     // Task creation
@@ -27,7 +30,7 @@ void setup_tasks() {
     if (CreateM7Tasks() != TaskErr_t::OK)
     {
         printf("Failed to create M7 tasks\r\n");
-        vTaskSuspend(nullptr);
+        update_state_event_m7(TaskID::M7_MAIN, SystemEvents::BOOT_FAIL);
     }
 }
 
@@ -53,5 +56,7 @@ extern "C" void app_main(void* param) {
     (void)param;
     printf("Starting M7 initialization...\r\n");
     coralmicro::main_m7();
+
+    // Should never reach here as main_m7 is a loop
     vTaskSuspend(nullptr);
 }

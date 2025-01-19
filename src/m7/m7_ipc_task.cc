@@ -40,7 +40,7 @@ void m7_ipc_task(void* parameters) {
     ipc->StartM4();
     if (!ipc->M4IsAlive(500)) {
         printf("M7 IPC: Failed to start M4 core\r\n");
-        vTaskSuspend(nullptr);
+        update_state_event_m7(TaskID::M7_IPC_TASK, SystemEvents::BOOT_FAIL); 
         return;
     }
     

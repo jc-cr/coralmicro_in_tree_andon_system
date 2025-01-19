@@ -52,6 +52,12 @@ namespace coralmicro {
         TickType_t timestamp;
     };
 
+    struct DepthEstimationData {
+        InferenceData inference_data;
+        TofData tof_data;
+        // TODO: add person distance estimation
+    };
+    
 
 
     // Queue handles

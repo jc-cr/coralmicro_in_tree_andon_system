@@ -14,5 +14,4 @@ namespace coralmicro{
     void m4_ipc_task(void* parameters);
     void process_sensor_data_m4();
     void tx_data();
-    void rx_data(); 
 }
