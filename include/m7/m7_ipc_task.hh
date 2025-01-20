@@ -12,4 +12,9 @@
 namespace coralmicro{
     void m7_ipc_task(void* parameters);
     void rx_data();
+
+    struct M7IpcTaskQueues{
+        static constexpr QueueHandle_t* inference_input_queue = &g_inference_input_queue_m7;
+        static constexpr QueueHandle_t* state_event_queue = &g_state_event_queue_m7;
+    };
 }

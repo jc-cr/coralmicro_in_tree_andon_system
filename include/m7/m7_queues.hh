@@ -6,6 +6,8 @@
 #include "third_party/freertos_kernel/include/FreeRTOS.h"
 #include "third_party/freertos_kernel/include/queue.h"
 
+#include "system_state.hh"
+
 // Camera
 #include "libs/camera/camera.h"
 
@@ -61,25 +63,37 @@ namespace coralmicro {
 
 
     // Queue handles
+    inline QueueHandle_t g_inference_input_queue_m7;  // Latest camera frame from IPC transfer
+
+    inline QueueHandle_t g_state_event_queue_m7;  // Latest state events from m7 and m4 ipc
+
     inline QueueHandle_t g_tof_queue_m7;      // Latest TOF frame
-    inline QueueHandle_t g_ipc_camera_queue_m7;  // Latest camera frame from IPC transfer
-    inline QueueHandle_t g_inference_queue_m7;   // Latest inference results
+    inline QueueHandle_t g_inference_output_queue_m7;   // Latest inference results
 
 
     // Queue creation
     inline bool InitQueues() {
+
+        g_inference_input_queue_m7 = xQueueCreate(1, sizeof(CameraData));
+        g_state_event_queue_m7 = xQueueCreate(3, sizeof(StateEventUpdateMessage)); // Able to hold 3 state events to prevent overwriting of events
+
         g_tof_queue_m7 = xQueueCreate(1, sizeof(TofData));
-        g_ipc_camera_queue_m7 = xQueueCreate(1, sizeof(CameraData));
-        g_inference_queue_m7 = xQueueCreate(1, sizeof(InferenceData));
+        g_inference_output_queue_m7 = xQueueCreate(1, sizeof(InferenceData));
+
         
-        return (g_tof_queue_m7 != nullptr && g_ipc_camera_queue_m7 != nullptr && g_inference_queue_m7 != nullptr);
+        return (g_tof_queue_m7 != nullptr 
+            && g_inference_input_queue_m7 != nullptr 
+            && g_inference_output_queue_m7 != nullptr 
+            && g_state_event_queue_m7 != nullptr);
     }
 
     // Queue cleanup
     inline void CleanupQueues() {
+        if (g_inference_input_queue_m7) vQueueDelete(g_inference_input_queue_m7);
+        if (g_state_event_queue_m7) vQueueDelete(g_state_event_queue_m7);
+
         if (g_tof_queue_m7) vQueueDelete(g_tof_queue_m7);
-        if (g_ipc_camera_queue_m7) vQueueDelete(g_ipc_camera_queue_m7);
-        if (g_inference_queue_m7) vQueueDelete(g_inference_queue_m7);
+        if (g_inference_output_queue_m7) vQueueDelete(g_inference_output_queue_m7);
     }
 
 }

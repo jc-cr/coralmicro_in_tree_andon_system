@@ -6,12 +6,18 @@
 #include "third_party/freertos_kernel/include/task.h"
 
 #include "libs/base/ipc_m4.h"
+
 #include "m4/m4_queues.hh"
-#include "ipc_ring_buffer.hh"
+#include "system_state.hh"
+#include "ipc_message.hh"
 
 namespace coralmicro{
 
     void m4_ipc_task(void* parameters);
-    void process_sensor_data_m4();
     void tx_data();
+
+    struct M4IpcTaskQueues{
+        static constexpr QueueHandle_t* camera_queue = &g_camera_queue_m4;
+        static constexpr QueueHandle_t* state_event_queue = &g_state_event_queue_m4;
+    };
 }
