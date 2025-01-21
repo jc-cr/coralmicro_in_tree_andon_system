@@ -5,8 +5,6 @@
 #include "m4/m4_queues.hh"
 #include "m4/task_config_m4.hh"
 
-#include "system_state.hh"
-
 namespace coralmicro {
 namespace {
 
@@ -17,7 +15,7 @@ void setup_tasks() {
     // BOOL return type
     if (!InitQueues()) {
         printf("Failed to initialize queues\r\n");
-        update_state_event_m4(TaskID::M4_MAIN, SystemEvents::BOOT_FAIL);
+        vTaskSuspend(nullptr);
     }
     
     // Task creation
@@ -25,7 +23,7 @@ void setup_tasks() {
     if (CreateM4Tasks() != TaskErr_t::OK)
     {
         printf("Failed to create M4 tasks\r\n");
-        update_state_event_m4(TaskID::M4_MAIN, SystemEvents::BOOT_FAIL);
+        vTaskSuspend(nullptr);
     }
 }
 

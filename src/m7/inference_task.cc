@@ -3,10 +3,9 @@
 
 namespace coralmicro {
 
-
     bool detect_objects(tflite::MicroInterpreter* interpreter, 
                     const CameraData& camera_data,
-                    std::vector<tensorflow::Object>* results) {
+                    std::vector<tensorflow::Object>* results, const RuntimeConfig& runtime_config) {
         
         if (!results) return false;
         
@@ -32,7 +31,10 @@ namespace coralmicro {
         }
         
         // Get all detection results with minimum score threshold
-        auto all_detections = tensorflow::GetDetectionResults(interpreter, 0.5f, 10);  // Increased max_detections
+        auto all_detections = tensorflow::GetDetectionResults(interpreter,
+            runtime_config.person_detection_min_confidence,
+            10);
+            // params: interpreter, threshold, max_results
         
         // Filter for person class (COCO class ID 0)
         results->clear();
@@ -52,6 +54,11 @@ namespace coralmicro {
     void inference_task(void* parameters) {
         (void)parameters;
         printf("Inference task starting...\r\n");
+
+        // Init data structures
+        RuntimeConfig latest_runtime_config = g_runtime_config; // Copy initial runtime config
+        CameraData latest_camera_data;
+        InferenceData latest_inference_data;
         
         // Load model
         std::vector<uint8_t> model;
@@ -91,26 +98,27 @@ namespace coralmicro {
         }
         
         // Main task loop
-        CameraData camera_data;
-        InferenceData inference_data;
-        
         while (true) {
+
+            // Get latest runtime config
+            read_runtime_config(latest_runtime_config);
+
             // Try to get latest camera frame
-            if (xQueuePeek(*InferenceTaskQueues::input_queue, &camera_data, 0) == pdTRUE) {
-                inference_data.camera_data = camera_data;
-                inference_data.timestamp = xTaskGetTickCount();
-                
+            if (xQueuePeek(*InferenceTaskQueues::input_queue, &latest_camera_data, 0) == pdTRUE) {
+                latest_inference_data.camera_data = latest_camera_data;
+                latest_inference_data.timestamp = xTaskGetTickCount();
+
                 // Run object detection
-                if (detect_objects(&interpreter, camera_data, &inference_data.results)) {
+                if (detect_objects(&interpreter, latest_camera_data, &latest_inference_data.results, latest_runtime_config)) {
                     // Print detection results for debugging
                     printf("Detection results:\r\n%s\r\n", 
-                        tensorflow::FormatDetectionOutput(inference_data.results).c_str());
+                        tensorflow::FormatDetectionOutput(latest_inference_data.results).c_str());
                         
                     // Store model dimensions for reference
-                    inference_data.model_width = interpreter.input_tensor(0)->dims->data[2];
-                    inference_data.model_height = interpreter.input_tensor(0)->dims->data[1];
+                    latest_inference_data.model_width = interpreter.input_tensor(0)->dims->data[2];
+                    latest_inference_data.model_height = interpreter.input_tensor(0)->dims->data[1];
 
-                    if (xQueueOverwrite(*InferenceTaskQueues::output_queue, &inference_data) != pdTRUE) {
+                    if (xQueueOverwrite(*InferenceTaskQueues::output_queue, &latest_inference_data) != pdTRUE) {
                         printf("Failed to send inference data to queue\r\n");
                     }
                     

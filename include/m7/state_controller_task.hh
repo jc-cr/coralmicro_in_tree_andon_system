@@ -2,3 +2,6 @@
 
 #pragma once
 
+namespace coralmicro{
+    void state_controller_task(void* parameters);
+}

@@ -7,7 +7,6 @@ void m7_ipc_task(void* parameters) {
     
     printf("M7 IPC task starting...\r\n");
     
-    // Setup IPC
     
     // Initialize IPC
     auto* ipc = IpcM7::GetSingleton();
@@ -18,10 +17,13 @@ void m7_ipc_task(void* parameters) {
 
     if (!ipc->M4IsAlive(500)) {
         printf("M7 IPC: Failed to start M4 core\r\n");
-        update_state_event_m7(TaskID::M7_IPC_TASK, SystemEvents::BOOT_FAIL); 
+        vTaskSuspend(nullptr);
         return;
     }
-    printf("M7 IPC: M4 core started successfully\r\n");
+    else
+    {
+        printf("M7 IPC: M4 core started successfully\r\n");
+    }
 
     
     // Main task loop
@@ -33,6 +35,7 @@ void m7_ipc_task(void* parameters) {
 void rx_data(const uint8_t data[kIpcMessageBufferDataSize]) {
     const auto* msg = reinterpret_cast<const AppMessage*>(data);
     switch (msg->type) {
+
         case AppMessageType::kCameraData: {
             const auto* camera_data = reinterpret_cast<const CameraData*>(msg->data);
 
@@ -41,14 +44,7 @@ void rx_data(const uint8_t data[kIpcMessageBufferDataSize]) {
 
             break;
         }
-        case AppMessageType::kStateEvent: {
-            const auto* state_event = reinterpret_cast<const StateEvent*>(msg->data);
 
-            // Place in state event queue
-            xQueueSendToBack(*M7IpcTaskQueues::state_event_queue, state_event, 0);
-
-            break;
-        }
         default:
             printf("M7 IPC: Unknown message type received\r\n");
             break;

@@ -11,11 +11,12 @@ set(M4_TASK_SOURCES
 )
 
 set(M7_TASK_SOURCES
+    src/m7/m7_ipc_task.cc
     src/m7/inference_task.cc
+    src/m7/depth_estimation_task.cc
+    src/m7/state_controller_task.cc
     src/m7/tof_task.cc
     src/m7/rgb_task.cc
-    src/m7/m7_ipc_task.cc
-    src/m7/rpc_task.cc
 )
 
 # Define paths for task configuration
@@ -71,6 +72,7 @@ add_executable_m4(${PROJECT_NAME}_m4
 target_include_directories(${PROJECT_NAME}_m4
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/m4
 )
 
 # Add dependency on task configuration for M4
@@ -136,6 +138,7 @@ add_executable_m7(${PROJECT_NAME}
 target_include_directories(${PROJECT_NAME}
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/m7
         ${CMAKE_CURRENT_SOURCE_DIR}/libs/coralmicro_VL53L8CX_ULD_driver/Platform
         ${CMAKE_CURRENT_SOURCE_DIR}/libs/coralmicro_VL53L8CX_ULD_driver/VL53L8CX_ULD_API/inc
 )
@@ -174,6 +177,7 @@ target_compile_options(${PROJECT_NAME}
         -Wextra
         $<$<COMPILE_LANGUAGE:C>:-std=c11>
         $<$<COMPILE_LANGUAGE:CXX>:-std=c++17>
+
 )
 
 # M7 linker flags

@@ -6,8 +6,6 @@
 #include "third_party/freertos_kernel/include/FreeRTOS.h"
 #include "third_party/freertos_kernel/include/queue.h"
 
-#include "system_state.hh"
-
 // Camera
 #include "libs/camera/camera.h"
 
@@ -24,6 +22,8 @@
 extern "C" {
 #include "vl53l8cx_api.h"
 }
+
+#include "state_definitions.hh"
 
 namespace coralmicro {
 

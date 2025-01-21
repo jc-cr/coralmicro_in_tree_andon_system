@@ -5,9 +5,11 @@
 #include <string.h>
 
 // Task implementations
+#include "m7/depth_estimation_task.hh"
 #include "m7/inference_task.hh"
 #include "m7/m7_ipc_task.hh"
-#include "m7/rpc_task.hh"
+#include "m7/rgb_task.hh"
+#include "m7/state_controller_task.hh"
 #include "m7/tof_task.hh"
 
 namespace coralmicro {
@@ -23,6 +25,14 @@ struct TaskConfig {
 };
 
 constexpr TaskConfig kM7TaskConfigs[] = {
+    {
+        m7_ipc_task,
+        "M7_IPC_Task",
+        STACK_SIZE_MEDIUM,
+        0,
+        TASK_PRIORITY_MEDIUM,
+        nullptr
+    },
     {
         tof_task,
         "TOF_Task",
@@ -40,19 +50,27 @@ constexpr TaskConfig kM7TaskConfigs[] = {
         nullptr
     },
     {
-        rpc_task,
-        "RPC_Task",
+        depth_estimation_task,
+        "Depth_Estimation_Task",
         STACK_SIZE_LARGE,
         0,
-        TASK_PRIORITY_LOW,
+        TASK_PRIORITY_HIGH,
         nullptr
     },
     {
-        m7_ipc_task,
-        "M7_IPC_Task",
-        STACK_SIZE_MEDIUM,
+        state_controller_task,
+        "State_Controller_Task",
+        STACK_SIZE_LARGE,
         0,
-        TASK_PRIORITY_MEDIUM,
+        TASK_PRIORITY_HIGH,
+        nullptr
+    },
+    {
+        rgb_task,
+        "RGB_Task",
+        STACK_SIZE_SMALL,
+        0,
+        TASK_PRIORITY_LOW,
         nullptr
     }
 };

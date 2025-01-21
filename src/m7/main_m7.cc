@@ -6,7 +6,6 @@
 #include "m7/task_config_m7.hh"
 #include "m7/m7_queues.hh"
 
-#include "system_state.hh"
 #include "logo.hh"
 
 
@@ -22,7 +21,7 @@ void setup_tasks() {
     // BOOL return type
     if (!InitQueues()) {
         printf("Failed to initialize queues\r\n");
-        update_state_event_m7(TaskID::M7_MAIN, SystemEvents::BOOT_FAIL);
+        vTaskSuspend(nullptr);
     }
     
     // Task creation
@@ -30,7 +29,7 @@ void setup_tasks() {
     if (CreateM7Tasks() != TaskErr_t::OK)
     {
         printf("Failed to create M7 tasks\r\n");
-        update_state_event_m7(TaskID::M7_MAIN, SystemEvents::BOOT_FAIL);
+        vTaskSuspend(nullptr);
     }
 }
 
