@@ -4,6 +4,8 @@ project(coralmicro_in_tree_andon_system)
 add_subdirectory(libs/coralmicro_VL53L8CX_ULD_driver)
 
 
+enable_language(ASM)
+
 # Define task source files for each core
 set(M4_TASK_SOURCES
     src/m4/camera_task.cc
@@ -17,6 +19,7 @@ set(M7_TASK_SOURCES
     src/m7/state_controller_task.cc
     src/m7/tof_task.cc
     src/m7/rgb_task.cc
+    src/m7/gpio_control.s
 )
 
 # Define paths for task configuration

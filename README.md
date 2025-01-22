@@ -1,6 +1,8 @@
 # coralmicro_in_tree_andon_system
 
+## Setup
 
+Paste the linker script info to `./coralmicro/libs/nxp/rt1176-sdk/MIMXRT1176xxxxx_cm7_ram.ld`
 
 
 ## Build the application
