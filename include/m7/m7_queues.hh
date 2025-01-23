@@ -54,21 +54,28 @@ namespace coralmicro {
         TickType_t timestamp;
     };
 
+    struct PersonDepthInfo {
+        int id;  // Detection ID from inference
+        uint16_t depth_mm;
+    };
+
     struct DepthEstimationData {
+        std::vector<PersonDepthInfo> person_depths;
+        TofData tof_data;
         InferenceData inference_data;
         TofData tof_data;
+        TickType_t timestamp;
         // TODO: add person distance estimation
     };
     
 
-
     // Queue handles
+
     inline QueueHandle_t g_inference_input_queue_m7;  // Latest camera frame from IPC transfer
-
     inline QueueHandle_t g_state_event_queue_m7;  // Latest state events from m7 and m4 ipc
-
     inline QueueHandle_t g_tof_queue_m7;      // Latest TOF frame
     inline QueueHandle_t g_inference_output_queue_m7;   // Latest inference results
+    inline QueueHandle_t g_depth_estimation_queue_m7;   // Latest depth estimation results
 
 
     // Queue creation
@@ -79,12 +86,13 @@ namespace coralmicro {
 
         g_tof_queue_m7 = xQueueCreate(1, sizeof(TofData));
         g_inference_output_queue_m7 = xQueueCreate(1, sizeof(InferenceData));
-
+        g_depth_estimation_queue_m7 = xQueueCreate(1, sizeof(DepthEstimationData));
         
         return (g_tof_queue_m7 != nullptr 
             && g_inference_input_queue_m7 != nullptr 
             && g_inference_output_queue_m7 != nullptr 
-            && g_state_event_queue_m7 != nullptr);
+            && g_state_event_queue_m7 != nullptr,
+            && g_depth_estimation_queue_m7 != nullptr);
     }
 
     // Queue cleanup
