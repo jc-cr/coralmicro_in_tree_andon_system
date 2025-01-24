@@ -109,12 +109,14 @@ namespace coralmicro {
             bool have_tof = false;
             
             // Try to get latest inference results
-            if (xQueuePeek(g_inference_output_queue_m7, &latest_inference_data, 0) == pdTRUE) {
+            if (xQueuePeek(DepthEstimationTaskQueues::input_queue_inference,
+            &latest_inference_data, 0) == pdTRUE) {
                 have_inference = true;
             }
             
             // Try to get latest TOF data
-            if (xQueuePeek(g_tof_queue_m7, &latest_tof_data, 0) == pdTRUE) {
+            if (xQueuePeek(DepthEstimationTaskQueues::input_queue_tof, 
+            &latest_tof_data, 0) == pdTRUE) {
                 have_tof = true;
             }
             
@@ -148,7 +150,8 @@ namespace coralmicro {
                 }
                 
                 // Send updated depth estimation data to queue
-                if (xQueueOverwrite(g_depth_estimation_output_queue_m7, &depth_data) != pdTRUE) {
+                if (xQueueOverwrite(DepthEstimationTaskQueues::output_queue
+                    , &depth_data) != pdTRUE) {
                     printf("Failed to send depth estimation data to queue\r\n");
                 }
             }
