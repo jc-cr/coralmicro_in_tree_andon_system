@@ -3,23 +3,20 @@ project(coralmicro_in_tree_andon_system)
 
 add_subdirectory(libs/coralmicro_VL53L8CX_ULD_driver)
 
-
 enable_language(ASM)
 
 # Define task source files for each core
 set(M4_TASK_SOURCES
-    src/m4/camera_task.cc
-    src/m4/m4_ipc_task.cc
 )
 
 set(M7_TASK_SOURCES
-    src/m7/m7_ipc_task.cc
+   # src/m7/tof_task.cc
+    src/m7/camera_task.cc
     src/m7/inference_task.cc
-    src/m7/depth_estimation_task.cc
-    src/m7/state_controller_task.cc
-    src/m7/tof_task.cc
-    src/m7/rgb_task.cc
-    src/m7/gpio_control.s
+
+   #  src/m7/rpc_task.cc
+   #  src/m7/led_task.cc
+   #  src/m7/gpio_control.s
 )
 
 # Define paths for task configuration
@@ -64,65 +61,6 @@ add_custom_target(${PROJECT_NAME}_generate_task_config
 )
 
 
-# M4 Core Executable
-add_executable_m4(${PROJECT_NAME}_m4
-    src/m4/main_m4.cc
-    ${TASK_CONFIG_M4_SOURCE}
-    ${M4_TASK_SOURCES}
-)
-
-# Set include directories for M4
-target_include_directories(${PROJECT_NAME}_m4
-    PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/include/m4
-)
-
-# Add dependency on task configuration for M4
-add_dependencies(${PROJECT_NAME}_m4 ${PROJECT_NAME}_generate_task_config)
-
-# Link libraries for M4
-target_link_libraries(${PROJECT_NAME}_m4
-    PRIVATE
-        libs_base-m4_freertos
-)
-
-# M4 compiler flags
-target_compile_options(${PROJECT_NAME}_m4
-    PRIVATE
-        -mcpu=cortex-m4
-        -mthumb
-        -mfpu=fpv4-sp-d16
-        -mfloat-abi=hard
-        -Os
-        -ffunction-sections
-        -fdata-sections
-        -fno-exceptions
-        -fno-rtti
-        -g0
-        -ffast-math
-        -fshort-enums
-        -fno-unwind-tables
-        -fno-asynchronous-unwind-tables
-        -Wall
-        -Wextra
-        $<$<COMPILE_LANGUAGE:C>:-std=c11>
-        $<$<COMPILE_LANGUAGE:CXX>:-std=c++17>
-)
-
-# M4 linker flags
-target_link_options(${PROJECT_NAME}_m4
-    PRIVATE
-        -mcpu=cortex-m4
-        -mthumb
-        -mfpu=fpv4-sp-d16
-        -mfloat-abi=hard
-        -Wl,-Map=${PROJECT_NAME}.map
-        -Wl,--print-memory-usage
-        -Wl,--gc-sections
-        -Wl,--sort-section=alignment
-        -Wl,--cref
-)
 
 
 # M7 Core Executable
@@ -131,10 +69,9 @@ add_executable_m7(${PROJECT_NAME}
     ${TASK_CONFIG_M7_SOURCE}
     ${M7_TASK_SOURCES}
 
-    M4_EXECUTABLE ${PROJECT_NAME}_m4
-
     DATA
-    ${PROJECT_SOURCE_DIR}/models/tf2_ssd_mobilenet_v2_coco17_ptq_edgetpu.tflite
+    ${CMAKE_CURRENT_SOURCE_DIR}/models/tf2_ssd_mobilenet_v2_coco17_ptq_edgetpu.tflite
+
 )
 
 # Set include directories for M7
@@ -154,9 +91,7 @@ target_link_libraries(${PROJECT_NAME}
     PRIVATE
         vl53l8cx_driver
         libs_rpc_http_server
-        libs_rpc_utils
         libs_base-m7_freertos
-        libs_tensorflow-m7
 )
 
 # M7 compiler flags
@@ -196,3 +131,4 @@ target_link_options(${PROJECT_NAME}
         -Wl,--sort-section=alignment
         -Wl,--cref
 )
+

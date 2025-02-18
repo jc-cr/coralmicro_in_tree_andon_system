@@ -5,20 +5,14 @@
 #include "libs/base/utils.h"
 #include "third_party/mjson/src/mjson.h"
 
-#include "libs/base/led.h"
-
 #include "m7/m7_queues.hh"
 
+#include "global_config.hh"
+
+
 namespace coralmicro {
-
-
     void rpc_task(void* parameters);
-
-    void tx_data();
-    void rx_data();
-
-
-    // TODO: Remove below
+    
     void get_frame(struct jsonrpc_request* request);
     void get_tof_grid(struct jsonrpc_request* request);
 }

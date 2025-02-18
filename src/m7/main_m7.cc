@@ -1,52 +1,77 @@
-
+// main_m7.cc
 #include "third_party/freertos_kernel/include/FreeRTOS.h"
 #include "third_party/freertos_kernel/include/task.h"
 
+#include "startup_banner.hh"
 
 #include "m7/task_config_m7.hh"
 #include "m7/m7_queues.hh"
-
-#include "logo.hh"
-
+#include "global_config.hh"
 
 namespace coralmicro {
 namespace {
 
-const char* PROJECT_NAME = "PCB Bringup";
+    // Properly allocate tensor arena in SDRAM section
+    STATIC_TENSOR_ARENA_IN_SDRAM(tensor_arena_buffer, g_tensor_arena_size);
 
-void setup_tasks() {
-    printf("Starting M7 task creation...\r\n");
 
-    // Init queues
-    // BOOL return type
-    if (!InitQueues()) {
-        printf("Failed to initialize queues\r\n");
-        vTaskSuspend(nullptr);
+    bool load_model() {
+        printf("Attempting to load model in main...\r\n");
+
+        g_tensor_arena = tensor_arena_buffer;
+        
+        // Check if model exists
+        if (!LfsFileExists(g_model_path)) {
+            printf("ERROR: Model file not found at %s\r\n", g_model_path);
+            return false;
+        }
+        
+        // Get model size
+        ssize_t model_size = LfsSize(g_model_path);
+        
+        // Try to load the model
+        if (!LfsReadFile(g_model_path, &g_model_data)) {
+            printf("ERROR: Failed to load model file\r\n");
+            return false;
+        }
+        
+        return true;
     }
-    
-    // Task creation
-    // TaskErr_t return type
-    if (CreateM7Tasks() != TaskErr_t::OK)
-    {
-        printf("Failed to create M7 tasks\r\n");
-        vTaskSuspend(nullptr);
-    }
-}
 
-[[noreturn]] void main_m7() {
-    // Print startup banner
-    printf("\n%s\r\n", PROJECT_NAME);
-    printf("Developed by JC \r\n");
-    printf("%s\r\n\n", PROJECT_LOGO);
+    void setup_tasks() {
+            printf("Starting M7 task creation...\r\n");
+            
+            // Task creation - queues already initialized in start_m4()
+            if (CreateM7Tasks() != TaskErr_t::OK)
+            {
+                printf("Failed to create M7 tasks\r\n");
+                vTaskSuspend(nullptr);
+            }
+        }
 
-    // Initialize M7 tasks
-    setup_tasks();
+    [[noreturn]] void main_m7() {
+        // Print startup banner
+        print_startup_banner();
 
-    printf("Entering M7 main loop\r\n");
-    while (true) {
-        vTaskDelay(pdMS_TO_TICKS(100));
-    }
-} 
+        // Initialize queues first
+        if (!InitQueues()) {
+            printf("Failed to initialize queues\r\n");
+            vTaskSuspend(nullptr);
+        }
+
+        if (!load_model()) {
+            printf("Failed to load model\r\n");
+            vTaskSuspend(nullptr);
+        }
+
+        // Initialize M7 tasks
+        setup_tasks();
+
+
+        while (true) {
+            vTaskDelay(pdMS_TO_TICKS(100));
+        }
+    } 
 
 } // namespace
 } // namespace coralmicro

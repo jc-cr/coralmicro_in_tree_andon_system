@@ -5,8 +5,7 @@
 #include <string.h>
 
 // Task implementations
-#include "m4/camera_task.hh"
-#include "m4/m4_ipc_task.hh"
+
 
 namespace coralmicro {
 namespace {
@@ -21,22 +20,7 @@ struct TaskConfig {
 };
 
 constexpr TaskConfig kM4TaskConfigs[] = {
-    {
-        camera_task,
-        "Camera_Task",
-        STACK_SIZE_MEDIUM,
-        0,
-        TASK_PRIORITY_MEDIUM,
-        nullptr
-    },
-    {
-        m4_ipc_task,
-        "M4_IPC_Task",
-        STACK_SIZE_MEDIUM,
-        0,
-        TASK_PRIORITY_MEDIUM,
-        nullptr
-    }
+
 };
 
 } // namespace

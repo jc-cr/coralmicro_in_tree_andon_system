@@ -1,4 +1,5 @@
-#include "m7/rgb_task.hh"
+// led_task.cc
+#include "m7/led_task.hh"
 
 namespace coralmicro {
 
@@ -28,31 +29,36 @@ inline void SendColor(uint8_t red, uint8_t green, uint8_t blue) {
     EnableGlobalIRQ(primask);
 }
 
-void rgb_task(void* parameters) {
+void led_task(void* parameters) {
     (void)parameters;
     
     printf("RGB task starting...\r\n");
     
     InitializeGpio();
-    
-    RuntimeConfig latest_runtime_config;
+
+    // Send red, blue, green colors every second
+    struct pattern {
+        uint8_t red;
+        uint8_t green;
+        uint8_t blue;
+    };
+
+    pattern all_red = {255, 0, 0};
+    pattern all_green = {0, 255, 0};
+    pattern all_blue = {0, 0, 255};
+
+
+    // Store patterns for loop
+    pattern patterns[3] = {all_red, all_green, all_blue};
     
     while (true) {
-        // Get latest runtime config
-        if (read_runtime_config(latest_runtime_config)) {
-            uint32_t color = latest_runtime_config.running_state_color;
-            
-            uint8_t red = (color >> 16) & 0xFF;
-            uint8_t green = (color >> 8) & 0xFF;
-            uint8_t blue = color & 0xFF;
-            
-            SendColor(red, green, blue);
-            SendColor(red, green, blue);
-            SendColor(red, green, blue);
+        for (int i = 0; i < 3; i++) {
+            SendColor(patterns[i].red, patterns[i].green, patterns[i].blue);
+            SendColor(patterns[i].red, patterns[i].green, patterns[i].blue);
+            SendColor(patterns[i].red, patterns[i].green, patterns[i].blue);
             ResetDelay();
+            vTaskDelay(pdMS_TO_TICKS(1000));
         }
-        
-        vTaskDelay(pdMS_TO_TICKS(100));
     }
 }
 
