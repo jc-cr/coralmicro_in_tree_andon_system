@@ -12,7 +12,6 @@ namespace coralmicro {
             vTaskSuspend(nullptr);
         }
         
-        
         // Initialize EdgeTPU with max performance
         auto tpu_context = EdgeTpuManager::GetSingleton()->OpenDevice(PerformanceMode::kMax);
         if (!tpu_context) {
@@ -37,7 +36,6 @@ namespace coralmicro {
             vTaskSuspend(nullptr);
         }
 
-        
         tflite::MicroInterpreter interpreter(
             tflite::GetModel(g_model_data.data()),
             resolver,
@@ -86,11 +84,13 @@ namespace coralmicro {
                         detection_result.detections = std::move(detections);
                         detection_result.inference_time = xTaskGetTickCount() - inference_start_time;
 
-                        // DEBUG: Print detection results from structur including time
+                        // DEBUG: Print detection results including time and bounding boxes
                         printf("Inference time: %d ms\r\n", detection_result.inference_time);
                         for (const auto& detection : detection_result.detections) {
-                            printf("Detected object ID: %d, Score: %f\r\n", 
-                                detection.id, detection.score);
+                            printf("Detected object ID: %d, Score: %f, BBox: [%.2f, %.2f, %.2f, %.2f]\r\n", 
+                                detection.id, detection.score,
+                                detection.bbox.xmin, detection.bbox.ymin,
+                                detection.bbox.xmax, detection.bbox.ymax);
                         }
                         
                         if (xQueueSend(g_detection_output_queue_m7, &detection_result, 0) != pdTRUE) {
@@ -118,20 +118,33 @@ namespace coralmicro {
         const int model_height = input_tensor->dims->data[1];
         const int model_width = input_tensor->dims->data[2];
         
-        if (camera_data.width != model_width || camera_data.height != model_height) {
-            printf("ERROR: Image dimensions mismatch: got %dx%d, expected %dx%d\r\n",
-                camera_data.width, camera_data.height, model_width, model_height);
+        // Create a buffer for the resized image
+        std::vector<uint8_t> resized_buffer(model_width * model_height * 3);  // 3 channels for RGB
+        
+        // Setup dimensions for resize operation
+        tensorflow::ImageDims in_dims = {
+            .height = static_cast<int>(camera_data.height),
+            .width = static_cast<int>(camera_data.width),
+            .depth = 3  // RGB
+        };
+        
+        tensorflow::ImageDims out_dims = {
+            .height = model_height,
+            .width = model_width,
+            .depth = 3  // RGB
+        };
+        
+        // Perform resize
+        if (!tensorflow::ResizeImage(in_dims, camera_data.image_data->data(),
+                                   out_dims, resized_buffer.data())) {
+            printf("ERROR: Failed to resize image from %dx%d to %dx%d\r\n",
+                   camera_data.width, camera_data.height, model_width, model_height);
             return false;
         }
         
-        if (camera_data.image_data->size() < input_tensor->bytes) {
-            printf("ERROR: Image data size mismatch: got %zu, expected %zu\r\n",
-                camera_data.image_data->size(), input_tensor->bytes);
-            return false;
-        }
-        
+        // Copy resized image to input tensor
         std::memcpy(tflite::GetTensorData<uint8_t>(input_tensor),
-                    camera_data.image_data->data(),
+                    resized_buffer.data(),
                     input_tensor->bytes);
         
         if (interpreter->Invoke() != kTfLiteOk) {
@@ -140,11 +153,22 @@ namespace coralmicro {
         }
         
         *results = tensorflow::GetDetectionResults(interpreter, g_threshold, 10);
+
+        // Scale bounding boxes from model dimensions to camera dimensions
+        const float scale_x = static_cast<float>(camera_data.width) / model_width;
+        const float scale_y = static_cast<float>(camera_data.height) / model_height;
         
-        // Filter for person class (COCO class ID 0)
+        for (auto& detection : *results) {
+            detection.bbox.xmin *= scale_x;
+            detection.bbox.xmax *= scale_x;
+            detection.bbox.ymin *= scale_y;
+            detection.bbox.ymax *= scale_y;
+        }
+
+        // Filter for person class (COCO class ID 1)
         results->erase(
             std::remove_if(results->begin(), results->end(),
-                        [](const tensorflow::Object& obj) { return obj.id != 0; }),
+                        [](const tensorflow::Object& obj) { return obj.id != 1; }),
             results->end());
 
         if (results->empty()) {
