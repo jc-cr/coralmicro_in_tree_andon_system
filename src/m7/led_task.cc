@@ -36,30 +36,37 @@ void led_task(void* parameters) {
     
     InitializeGpio();
 
-    // Send red, blue, green colors every second
-    struct pattern {
-        uint8_t red;
-        uint8_t green;
-        uint8_t blue;
-    };
 
-    pattern all_red = {255, 0, 0};
-    pattern all_green = {0, 255, 0};
-    pattern all_blue = {0, 0, 255};
+    SystemState current_state;
+    SystemState new_state;
 
 
-    // Store patterns for loop
-    pattern patterns[3] = {all_red, all_green, all_blue};
-    
     while (true) {
-        for (int i = 0; i < 3; i++) {
-            SendColor(patterns[i].red, patterns[i].green, patterns[i].blue);
-            SendColor(patterns[i].red, patterns[i].green, patterns[i].blue);
-            SendColor(patterns[i].red, patterns[i].green, patterns[i].blue);
-            ResetDelay();
-            vTaskDelay(pdMS_TO_TICKS(1000));
+
+            new_state = g_system_state.load();
+
+            if (new_state != current_state) {
+                switch (new_state) {
+                    case SystemState::IDLE:
+                        SendColor(0, 255, 0); // Green
+                        SendColor(0, 255, 0); // Green
+                        SendColor(0, 255, 0); // Green
+                        break;
+                    case SystemState::WARNING:
+                        SendColor(255, 255, 0); // Yellow
+                        SendColor(255, 255, 0); // Yellow
+                        SendColor(255, 255, 0); // Yellow
+                        break;
+                    case SystemState::ERROR:
+                        SendColor(255, 0, 0); // Red
+                        SendColor(255, 0, 0); // Red
+                        SendColor(255, 0, 0); // Red
+                        break;
+                }
+                current_state = new_state;
+            }
+
+            vTaskDelay(pdMS_TO_TICKS(33));
         }
     }
 }
-
-} // namespace coralmicro

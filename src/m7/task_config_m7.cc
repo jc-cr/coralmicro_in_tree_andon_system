@@ -7,6 +7,7 @@
 // Task implementations
 #include "m7/camera_task.hh"
 #include "m7/inference_task.hh"
+#include "m7/tof_task.hh"
 
 namespace coralmicro {
 namespace {
@@ -24,6 +25,14 @@ constexpr TaskConfig kM7TaskConfigs[] = {
     {
         camera_task,
         "Camera_Task",
+        STACK_SIZE_MEDIUM,
+        0,
+        TASK_PRIORITY_MEDIUM,
+        nullptr
+    },
+    {
+        tof_task,
+        "TOF_Task",
         STACK_SIZE_MEDIUM,
         0,
         TASK_PRIORITY_MEDIUM,

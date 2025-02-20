@@ -137,38 +137,9 @@ namespace coralmicro {
 
         uint8_t status;
         
-        if (!init_gpio()) {
-
-            printf("GPIO initialization failed\r\n");
-            vTaskSuspend(nullptr);
-        }
-        
-        // Platform initialization with proper cleanup
-        VL53L8CX_Platform platform = {};
-        if (!vl53l8cx::PlatformInit(&platform, kI2c, kAddress)) {
-
-            printf("Platform initialization failed\r\n");
-            vTaskSuspend(nullptr);
-        }
-        
-        // Create and initialize device instance
-        auto dev = std::make_unique<VL53L8CX_Configuration>();
-        if (!dev) {
-            printf("Failed to allocate device configuration\r\n");
-            vTaskSuspend(nullptr);
-        }
-        
-        dev->platform = platform;
-        
-        
-        if (!init_sensor(dev.get())) {
-
-            printf("Sensor initialization failed - exiting task\r\n");
-            vTaskSuspend(nullptr);
-        }
         
         // Start ranging
-        status = vl53l8cx_start_ranging(dev.get());
+        status = vl53l8cx_start_ranging(g_tof_device.get());
         if (status != VL53L8CX_STATUS_OK) {
             print_sensor_error("starting ranging", status);
             vTaskSuspend(nullptr);
@@ -194,10 +165,10 @@ namespace coralmicro {
             uint8_t isReady = 0;
             
             // Check if new data is ready
-            status = vl53l8cx_check_data_ready(dev.get(), &isReady);
+            status = vl53l8cx_check_data_ready(g_tof_device.get(), &isReady);
             
             if (status == VL53L8CX_STATUS_OK && isReady) {
-                status = vl53l8cx_get_ranging_data(dev.get(), results.get());
+                status = vl53l8cx_get_ranging_data(g_tof_device.get(), results.get());
 
                 if (status == VL53L8CX_STATUS_OK) {
                     if (!print_data_sample_flag)

@@ -15,9 +15,9 @@ namespace coralmicro{
         static constexpr CameraFormat kFormat = CameraFormat::kRgb;
         static constexpr CameraFilterMethod filter = CameraFilterMethod::kBilinear;
         static constexpr CameraRotation rotation = CameraRotation::k270;
-        static constexpr uint32_t kWidth = 324;
-        static constexpr uint32_t kHeight = 324;
-        static constexpr bool preserve_ratio = false;
+        static constexpr uint32_t kWidth = 300;
+        static constexpr uint32_t kHeight = 300;
+        static constexpr bool preserve_ratio = true;
         static constexpr bool auto_white_balance = false;
     };
 

@@ -22,6 +22,8 @@ extern "C" {
 #include "global_config.hh"
 
 namespace coralmicro {
+    inline std::unique_ptr<VL53L8CX_Configuration> g_tof_device;
+
     // Task
     void tof_task(void* parameters);
 

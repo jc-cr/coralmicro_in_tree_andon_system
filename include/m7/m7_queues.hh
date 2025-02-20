@@ -20,6 +20,8 @@ extern "C" {
 #include "libs/tensorflow/detection.h"
 #include "libs/tensorflow/utils.h"
 
+#include "system_states.hh"
+
 namespace coralmicro {
 
     struct CameraData {
