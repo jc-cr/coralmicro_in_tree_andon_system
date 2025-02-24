@@ -33,7 +33,7 @@ constexpr TaskConfig kM7TaskConfigs[] = {
     {
         tof_task,
         "TOF_Task",
-        STACK_SIZE_MEDIUM,
+        STACK_SIZE_LARGE,
         0,
         TASK_PRIORITY_MEDIUM,
         nullptr
@@ -43,7 +43,7 @@ constexpr TaskConfig kM7TaskConfigs[] = {
         "Inference_Task",
         STACK_SIZE_LARGE,
         0,
-        TASK_PRIORITY_HIGH,
+        TASK_PRIORITY_MEDIUM,
         nullptr
     }
 };

@@ -60,9 +60,6 @@ add_custom_target(${PROJECT_NAME}_generate_task_config
         ${TASK_CONFIG_M4_SOURCE}
 )
 
-
-
-
 # M7 Core Executable
 add_executable_m7(${PROJECT_NAME}
     src/m7/main_m7.cc
@@ -113,6 +110,7 @@ target_compile_options(${PROJECT_NAME}
         -fno-asynchronous-unwind-tables
         -Wall
         -Wextra
+        -Werror=unused-function
         $<$<COMPILE_LANGUAGE:C>:-std=c11>
         $<$<COMPILE_LANGUAGE:CXX>:-std=c++17>
 

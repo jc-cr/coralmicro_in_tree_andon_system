@@ -155,11 +155,10 @@ namespace coralmicro {
 
         print_task_ok();
         
-        // Main loop with controlled timing
-        TickType_t last_wake_time = xTaskGetTickCount();
 
-        // 30 Hz
-        const TickType_t frequency = pdMS_TO_TICKS(33);
+        int Hz = 15;
+        TickType_t last_wake_time = xTaskGetTickCount();
+        const TickType_t frequency = pdMS_TO_TICKS(1000 / Hz);
 
         while (true) {
             uint8_t isReady = 0;
@@ -171,36 +170,9 @@ namespace coralmicro {
                 status = vl53l8cx_get_ranging_data(g_tof_device.get(), results.get());
 
                 if (status == VL53L8CX_STATUS_OK) {
-                    if (!print_data_sample_flag)
-                    {
-
-                    printf("\nVL53L8CX_ResultsData structure details:\n\r");
-                    printf("Total struct size: %u bytes\n\r", (uint32_t)sizeof(VL53L8CX_ResultsData));
-                    printf("Field sizes and offsets:\n\r");
-                    printf("silicon_temp_degc: size=%u, offset=%u\n\r", 
-                        (uint32_t)sizeof(results->silicon_temp_degc), 
-                        (uint32_t)offsetof(VL53L8CX_ResultsData, silicon_temp_degc));
-                    printf("ambient_per_spad: size=%u, offset=%u\n\r",
-                        (uint32_t)sizeof(results->ambient_per_spad),
-                        (uint32_t)offsetof(VL53L8CX_ResultsData, ambient_per_spad));
-                    printf("nb_target_detected: size=%u, offset=%u\n\r", 
-                        (uint32_t)sizeof(results->nb_target_detected),
-                        (uint32_t)offsetof(VL53L8CX_ResultsData, nb_target_detected));
-                    printf("nb_spads_enabled: size=%u, offset=%u\n\r",
-                        (uint32_t)sizeof(results->nb_spads_enabled),
-                        (uint32_t)offsetof(VL53L8CX_ResultsData, nb_spads_enabled));
-                    printf("signal_per_spad: size=%u, offset=%u\n\r",
-                        (uint32_t)sizeof(results->signal_per_spad),
-                        (uint32_t)offsetof(VL53L8CX_ResultsData, signal_per_spad));
-                    printf("range_sigma_mm: size=%u, offset=%u\n\r",
-                        (uint32_t)sizeof(results->range_sigma_mm),
-                        (uint32_t)offsetof(VL53L8CX_ResultsData, range_sigma_mm));
-                    printf("distance_mm: size=%u, offset=%u\n\r",
-                        (uint32_t)sizeof(results->distance_mm),
-                        (uint32_t)offsetof(VL53L8CX_ResultsData, distance_mm));
-
-                        // Print sample data
-                        printf("\r\nTOF Grid (mm):\r\n");
+                    // Only print once to reduce console output load
+                    if (!print_data_sample_flag) {
+                        printf("\nTOF Grid (mm):\r\n");
                         printf("    C0    C1    C2    C3\r\n");
                         for(int row = 0; row < 4; row++) {
                             printf("R%d:", row);
@@ -210,16 +182,13 @@ namespace coralmicro {
                             }
                             printf("\r\n");
                         }
-
                         print_data_sample_flag = true;
                     }
 
-
-
+                    // Send data to queue
                     if (xQueueOverwrite(g_tof_queue_m7, results.get()) != pdTRUE) {
                         printf("Failed to send TOF data to queue\r\n");
                     }
-
                 } else {
                     print_sensor_error("getting ranging data", status);
                 }
@@ -227,9 +196,8 @@ namespace coralmicro {
                 print_sensor_error("checking data ready", status);
             }
             
- 
-        // Use vTaskDelayUntil for more precise timing
-        vTaskDelayUntil(&last_wake_time, frequency);
+            // Use vTaskDelayUntil for more precise timing
+            vTaskDelayUntil(&last_wake_time, frequency);
         }
     }
 } // namespace coralmicro

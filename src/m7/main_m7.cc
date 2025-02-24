@@ -15,6 +15,8 @@ namespace {
     // Properly allocate tensor arena in SDRAM section
     STATIC_TENSOR_ARENA_IN_SDRAM(tensor_arena_buffer, g_tensor_arena_size);
 
+    // Global TPU context to keep it alive
+    std::shared_ptr<EdgeTpuContext> g_tpu_context;
 
     bool init_tof_device() {
         // Initialize GPIO first
@@ -47,7 +49,6 @@ namespace {
         return true;
     }
 
-
     bool load_model() {
         printf("Attempting to load model in main...\r\n");
 
@@ -59,15 +60,29 @@ namespace {
             return false;
         }
         
-        // Get model size
-        ssize_t model_size = LfsSize(g_model_path);
-        
         // Try to load the model
         if (!LfsReadFile(g_model_path, &g_model_data)) {
             printf("ERROR: Failed to load model file\r\n");
             return false;
         }
         
+        return true;
+    }
+
+    bool init_tpu() {
+        printf("Initializing EdgeTPU...\r\n");
+
+        // Initialize EdgeTPU with max performance and store in global
+        g_tpu_context = EdgeTpuManager::GetSingleton()->OpenDevice(PerformanceMode::kMax);
+        if (!g_tpu_context) {
+            printf("ERROR: Failed to initialize EdgeTPU\r\n");
+            return false;
+        }
+
+        // Store TPU context in global space
+        g_tpu_manager_singleton = EdgeTpuManager::GetSingleton();
+
+        printf("EdgeTPU initialized successfully\r\n");
         return true;
     }
 
@@ -94,6 +109,11 @@ namespace {
 
         if (!load_model()) {
             printf("Failed to load model\r\n");
+            vTaskSuspend(nullptr);
+        }
+
+        if (!init_tpu()) {
+            printf("Failed to initialize EdgeTPU\r\n");
             vTaskSuspend(nullptr);
         }
 

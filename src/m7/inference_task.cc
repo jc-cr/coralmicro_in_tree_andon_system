@@ -16,11 +16,15 @@ bool detect_objects(tflite::MicroInterpreter* interpreter,
     std::memcpy(tflite::GetTensorData<uint8_t>(input_tensor), 
             camera_data.image_data->data(), camera_data.image_data->size());
     
-    if (interpreter->Invoke() != kTfLiteOk) {
-        printf("ERROR: Inference failed\r\n");
+    TfLiteStatus invoke_status = interpreter->Invoke();
+    if (invoke_status != kTfLiteOk) {
+        printf("ERROR: Inference failed with status %d\r\n", invoke_status);
+        // Add a small delay for system recovery
+        vTaskDelay(pdMS_TO_TICKS(50));
         return false;
     }
     
+    // Get results after inference is complete
     *results = tensorflow::GetDetectionResults(interpreter, g_threshold, 3);
 
     // If no results, return
@@ -47,20 +51,17 @@ bool detect_objects(tflite::MicroInterpreter* interpreter,
     return true;
 }
 
+
 void inference_task(void* parameters) {
     (void)parameters;
     printf("Inference task starting...\r\n");
     
+    // Add delay to ensure TOF task has fully initialized
+    vTaskDelay(pdMS_TO_TICKS(200));
+    
     // Check if model data is loaded
     if (g_model_data.empty()) {
         printf("ERROR: Model data is empty\r\n");
-        vTaskSuspend(nullptr);
-    }
-    
-    // Initialize EdgeTPU with max performance
-    auto tpu_context = EdgeTpuManager::GetSingleton()->OpenDevice(PerformanceMode::kMax);
-    if (!tpu_context) {
-        printf("ERROR: Failed to initialize EdgeTPU\r\n");
         vTaskSuspend(nullptr);
     }
     
@@ -81,16 +82,36 @@ void inference_task(void* parameters) {
         vTaskSuspend(nullptr);
     }
 
+    // Create interpreter with error checking
+    const tflite::Model* model = tflite::GetModel(g_model_data.data());
+    if (model == nullptr) {
+        printf("ERROR: Failed to get model from data\r\n");
+        vTaskSuspend(nullptr);
+    }
+    
+    // Create interpreter
     tflite::MicroInterpreter interpreter(
-        tflite::GetModel(g_model_data.data()),
+        model,
         resolver,
         g_tensor_arena,
         g_tensor_arena_size,
         &error_reporter
     );
     
-    if (interpreter.AllocateTensors() != kTfLiteOk) {
-        printf("ERROR: Failed to allocate tensors\r\n");
+    // Allocate tensors with retry mechanism
+    TfLiteStatus allocate_status = interpreter.AllocateTensors();
+    int retry_count = 0;
+    const int max_retries = 3;
+    
+    while (allocate_status != kTfLiteOk && retry_count < max_retries) {
+        printf("Retrying tensor allocation (%d/%d)\r\n", retry_count + 1, max_retries);
+        vTaskDelay(pdMS_TO_TICKS(100 * (retry_count + 1)));
+        allocate_status = interpreter.AllocateTensors();
+        retry_count++;
+    }
+    
+    if (allocate_status != kTfLiteOk) {
+        printf("ERROR: Failed to allocate tensors after %d attempts\r\n", max_retries);
         vTaskSuspend(nullptr);
     }
 
@@ -106,8 +127,14 @@ void inference_task(void* parameters) {
     // Main inference loop
     CameraData camera_data;
     
+    
+    // Inference Hz
+    int Hz = 10;
+    const TickType_t inference_period = pdMS_TO_TICKS(1000 / Hz);
+    TickType_t last_wake_time = xTaskGetTickCount();
+    
     while (true) {
-        // Use receive instead of peek to properly handle the queue
+        // Try to receive camera data
         if (xQueueReceive(g_camera_queue_m7, &camera_data, 0) == pdTRUE) {
             DetectionData detection_result;
             detection_result.camera_data = camera_data;
@@ -115,7 +142,7 @@ void inference_task(void* parameters) {
             
             std::vector<tensorflow::Object> detections;
             
-            if (detect_objects(&interpreter, camera_data, &detections)) {
+            if (detect_objects(&interpreter, detection_result.camera_data, &detections)) {
                 detection_result.detections = std::move(detections);
                 detection_result.inference_time = xTaskGetTickCount() - detection_result.timestamp;
 
@@ -125,7 +152,8 @@ void inference_task(void* parameters) {
             }
         }
 
-        vTaskDelay(pdMS_TO_TICKS(33));
+        // Use vTaskDelayUntil for more consistent timing
+        vTaskDelayUntil(&last_wake_time, inference_period);
     }
 }
 }
