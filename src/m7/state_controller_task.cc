@@ -9,7 +9,6 @@ namespace coralmicro{
         printf("State controller task starting...\r\n");
         
         SystemState current_state = g_system_state.load();
-        SystemState new_state;
 
         // Update to idle if uninitialized
         if (current_state == SystemState::UNINITIALIZED) {
@@ -18,25 +17,29 @@ namespace coralmicro{
         }
 
         // Print current state
-        printf("System State: %i\r\n", current_state);
-        
+        printf("System State: %i\r\n", static_cast<int>(current_state));
+
+
+        SystemState new_state = current_state;
+
+        DetectionData detection_data;
+
         while (true) {
-
             // Determine new state based on conditions
-            // If person detected set to state to warning and move data to depth estimation queue
-            // If no person detected set state to idle, update logging data struct and push to logging queue
+            /*
+            From IDLE of WARNING, get person detection
+            If person detected, set state to WARNING
+            If person not detected, set state to IDLE
+            
+            */
 
-            DetectionData detection_data;
             if (xQueueReceive(g_detection_output_queue_m7, &detection_data, 0) == pdTRUE) {
-                if (detection_data.detections.size() > 0) {
+                // Check that the pointer is valid before trying to access it
+                if (detection_data.detections && detection_data.detections->size() > 0) {
                     new_state = SystemState::WARNING;
                 } else {
                     new_state = SystemState::IDLE;
                 }
-            } 
-            // Empty queue
-            else {
-                new_state = SystemState::IDLE;
             }
             
             

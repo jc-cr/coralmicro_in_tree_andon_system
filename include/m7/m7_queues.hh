@@ -35,12 +35,13 @@ namespace coralmicro {
     };
 
     struct DetectionData {
-        CameraData camera_data;                           // Original camera data
-        std::vector<tensorflow::Object> detections;       // Detection results
-        TickType_t timestamp;                            // Timestamp of the detection
-        TickType_t inference_time;                        // Time taken for inference
+        CameraData camera_data;
+        std::shared_ptr<std::vector<tensorflow::Object>> detections;
+        TickType_t timestamp;
+        TickType_t inference_time;
+        
+        DetectionData() : detections(std::make_shared<std::vector<tensorflow::Object>>()) {}
     };
-
     // Queue handles
     inline QueueHandle_t g_tof_queue_m7;      // Latest TOF frame
     inline QueueHandle_t g_camera_queue_m7;   // Latest camera frame

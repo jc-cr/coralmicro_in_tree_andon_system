@@ -28,4 +28,6 @@ namespace coralmicro {
                        const CameraData& camera_data,
                        std::vector<tensorflow::Object>* results);
 
+    // Settings
+    constexpr float kDetectionThreshold = 0.5f;
 }

@@ -2,8 +2,6 @@
 
 namespace coralmicro {
 
-    // Settings
-    constexpr float kDetectionThreshold = 0.5f;
 
     bool detect_objects(tflite::MicroInterpreter* interpreter, 
                         const CameraData& camera_data,
@@ -133,20 +131,36 @@ namespace coralmicro {
         int Hz = 10;
         const TickType_t inference_period = pdMS_TO_TICKS(1000 / Hz);
         TickType_t last_wake_time = xTaskGetTickCount();
+
+
+        DetectionData detection_result;
         
         while (true) {
             // Try to receive camera data
             if (xQueueReceive(g_camera_queue_m7, &camera_data, 0) == pdTRUE) {
-                DetectionData detection_result;
+
                 detection_result.camera_data = camera_data;
                 detection_result.timestamp = xTaskGetTickCount();
                 
                 std::vector<tensorflow::Object> detections;
                 
+                // Update queu with detection results if objects are detected
                 if (detect_objects(&interpreter, detection_result.camera_data, &detections)) {
-                    detection_result.detections = std::move(detections);
+                    
+                    detection_result.detections->clear();
+                    *(detection_result.detections) = detections;  // Use copy instead of move
                     detection_result.inference_time = xTaskGetTickCount() - detection_result.timestamp;
 
+                    if (xQueueOverwrite(g_detection_output_queue_m7, &detection_result) != pdTRUE) {
+                        printf("ERROR: Failed to send detection result\r\n");
+                    }
+
+                // Otherwise set detection to empty
+                } else {
+                    detection_result.detections->clear();
+
+                    detection_result.inference_time = 0;
+                    
                     if (xQueueOverwrite(g_detection_output_queue_m7, &detection_result) != pdTRUE) {
                         printf("ERROR: Failed to send detection result\r\n");
                     }
