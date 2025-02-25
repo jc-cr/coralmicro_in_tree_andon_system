@@ -7,6 +7,7 @@
 // Task implementations
 #include "m7/camera_task.hh"
 #include "m7/inference_task.hh"
+#include "m7/led_task.hh"
 #include "m7/state_controller_task.hh"
 #include "m7/tof_task.hh"
 
@@ -43,6 +44,14 @@ constexpr TaskConfig kM7TaskConfigs[] = {
         inference_task,
         "Inference_Task",
         STACK_SIZE_LARGE,
+        0,
+        TASK_PRIORITY_MEDIUM,
+        nullptr
+    },
+    {
+        led_task,
+        "LED_Task",
+        STACK_SIZE_SMALL,
         0,
         TASK_PRIORITY_MEDIUM,
         nullptr

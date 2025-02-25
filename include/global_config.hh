@@ -14,9 +14,6 @@ extern "C" {
 // Global configuration values
 namespace coralmicro {
 
-    // State Controller Settings
-    inline std::atomic<SystemState> g_system_state{SystemState::UNINITIALIZED};
-
     // TOF config
     inline std::atomic<uint8_t> g_tof_resolution{VL53L8CX_RESOLUTION_4X4};  // Default to 4x4
 

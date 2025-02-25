@@ -42,16 +42,22 @@ namespace coralmicro {
         
         DetectionData() : detections(std::make_shared<std::vector<tensorflow::Object>>()) {}
     };
+
+
+
+
     // Queue handles
     inline QueueHandle_t g_tof_queue_m7;      // Latest TOF frame
     inline QueueHandle_t g_camera_queue_m7;   // Latest camera frame
     inline QueueHandle_t g_detection_output_queue_m7; // Detection results
+    inline QueueHandle_t g_state_update_queue_m7; // State updates
 
     // Queue creation
     inline bool InitQueues() {
         g_tof_queue_m7 = xQueueCreate(1, sizeof(VL53L8CX_ResultsData));
         g_camera_queue_m7 = xQueueCreate(1, sizeof(CameraData));
         g_detection_output_queue_m7 = xQueueCreate(1, sizeof(DetectionData));
+        g_state_update_queue_m7 = xQueueCreate(1, sizeof(SystemState));
         
         return (g_tof_queue_m7 != nullptr && g_camera_queue_m7 != nullptr);
     }

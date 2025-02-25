@@ -8,17 +8,16 @@ namespace coralmicro{
         (void)parameters;
         printf("State controller task starting...\r\n");
         
-        SystemState current_state = g_system_state.load();
+        SystemState current_state = SystemState::UNINITIALIZED;
 
         // Update to idle if uninitialized
         if (current_state == SystemState::UNINITIALIZED) {
-            g_system_state.store(SystemState::IDLE);
             current_state = SystemState::IDLE;
+            xQueueOverwrite(g_state_update_queue_m7, &current_state);
         }
 
         // Print current state
         printf("System State: %i\r\n", static_cast<int>(current_state));
-
 
         SystemState new_state = current_state;
 
@@ -44,24 +43,9 @@ namespace coralmicro{
             
             
             if (new_state != current_state) {
-                switch (new_state) {
-                    case SystemState::IDLE:
-                        g_system_state.store(SystemState::IDLE);
-                        printf("System State: IDLE\r\n");
-                        break;
-                    case SystemState::WARNING:
-                        g_system_state.store(SystemState::WARNING);
-                        printf("System State: WARNING\r\n");
-                        break;
-                    case SystemState::ERROR:
-                        g_system_state.store(SystemState::ERROR);
-                        printf("System State: ERROR\r\n");
-                        break;
-                    default:
-                        printf("System State: UNKNOWN\r\n");
-                        break;
-                }
-                
+
+                xQueueOverwrite(g_state_update_queue_m7, &new_state);
+                printf("System State: %i\r\n", static_cast<int>(new_state));
                 current_state = new_state;
             }
             
