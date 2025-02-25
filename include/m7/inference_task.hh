@@ -28,6 +28,4 @@ namespace coralmicro {
                        const CameraData& camera_data,
                        std::vector<tensorflow::Object>* results);
 
-
-
 }

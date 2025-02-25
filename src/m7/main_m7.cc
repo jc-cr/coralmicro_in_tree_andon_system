@@ -12,11 +12,6 @@
 namespace coralmicro {
 namespace {
 
-    // Properly allocate tensor arena in SDRAM section
-    STATIC_TENSOR_ARENA_IN_SDRAM(tensor_arena_buffer, g_tensor_arena_size);
-
-    // Global TPU context to keep it alive
-    std::shared_ptr<EdgeTpuContext> g_tpu_context;
 
     bool init_tof_device() {
         // Initialize GPIO first
@@ -48,6 +43,13 @@ namespace {
 
         return true;
     }
+
+
+    // Properly allocate tensor arena in SDRAM section
+    STATIC_TENSOR_ARENA_IN_SDRAM(tensor_arena_buffer, g_tensor_arena_size);
+
+    // Global TPU context to keep it alive
+    std::shared_ptr<EdgeTpuContext> g_tpu_context;
 
     bool load_model() {
         printf("Attempting to load model in main...\r\n");

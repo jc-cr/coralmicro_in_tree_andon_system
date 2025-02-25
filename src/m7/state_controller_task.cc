@@ -27,7 +27,7 @@ namespace coralmicro{
             // If no person detected set state to idle, update logging data struct and push to logging queue
 
             DetectionData detection_data;
-            if (xQueuePeek(g_detection_output_queue_m7, &detection_data, 0) == pdTRUE) {
+            if (xQueueReceive(g_detection_output_queue_m7, &detection_data, 0) == pdTRUE) {
                 if (detection_data.detections.size() > 0) {
                     new_state = SystemState::WARNING;
                 } else {

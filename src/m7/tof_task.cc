@@ -156,7 +156,7 @@ namespace coralmicro {
         print_task_ok();
         
 
-        int Hz = 15;
+        int Hz = kRangingFrequency;
         TickType_t last_wake_time = xTaskGetTickCount();
         const TickType_t frequency = pdMS_TO_TICKS(1000 / Hz);
 

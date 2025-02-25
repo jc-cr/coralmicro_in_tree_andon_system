@@ -42,6 +42,6 @@ namespace coralmicro {
     static constexpr I2c kI2c = I2c::kI2c1;
     
     static constexpr uint16_t kAddress = 0x29; // 0x58 >> 1
-    static constexpr uint8_t kRangingFrequency = 30; // Hz
+    static constexpr uint8_t kRangingFrequency = 15; // Hz
     static constexpr uint8_t kSharpnerValue = 25; // %
 }
