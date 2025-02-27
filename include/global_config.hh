@@ -8,7 +8,7 @@ extern "C" {
 #include "vl53l8cx_api.h"
 }
 
-#include "system_states.hh"
+#include "system_enums.hh"
 #include "libs/tpu/edgetpu_manager.h"
 
 // Global configuration values
@@ -25,5 +25,4 @@ namespace coralmicro {
 
     // TPU context (global to keep alive between tasks)
     inline EdgeTpuManager* g_tpu_manager_singleton = nullptr;
-
 }

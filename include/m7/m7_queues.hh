@@ -20,7 +20,7 @@ extern "C" {
 #include "libs/tensorflow/detection.h"
 #include "libs/tensorflow/utils.h"
 
-#include "system_states.hh"
+#include "system_enums.hh"
 
 namespace coralmicro {
 
@@ -43,21 +43,33 @@ namespace coralmicro {
         DetectionData() : detections(std::make_shared<std::vector<tensorflow::Object>>()) {}
     };
 
-
+    struct LoggingData {
+        SystemState state;
+        // DetectionData detection_data;
+    };
 
 
     // Queue handles
     inline QueueHandle_t g_tof_queue_m7;      // Latest TOF frame
     inline QueueHandle_t g_camera_queue_m7;   // Latest camera frame
     inline QueueHandle_t g_detection_output_queue_m7; // Detection results
+
     inline QueueHandle_t g_state_update_queue_m7; // State updates
+    inline QueueHandle_t g_host_condition_queue_m7; // Host condition updates
+
+    inline QueueHandle_t g_logging_queue_m7; // Logging data
+
 
     // Queue creation
     inline bool InitQueues() {
         g_tof_queue_m7 = xQueueCreate(1, sizeof(VL53L8CX_ResultsData));
         g_camera_queue_m7 = xQueueCreate(1, sizeof(CameraData));
         g_detection_output_queue_m7 = xQueueCreate(1, sizeof(DetectionData));
+
         g_state_update_queue_m7 = xQueueCreate(1, sizeof(SystemState));
+        g_host_condition_queue_m7 = xQueueCreate(1, sizeof(HostCondition));
+
+        g_logging_queue_m7 = xQueueCreate(1, sizeof(LoggingData));
         
         return (g_tof_queue_m7 != nullptr && g_camera_queue_m7 != nullptr);
     }
@@ -67,6 +79,10 @@ namespace coralmicro {
         if (g_tof_queue_m7) vQueueDelete(g_tof_queue_m7);
         if (g_camera_queue_m7) vQueueDelete(g_camera_queue_m7);
         if (g_detection_output_queue_m7) vQueueDelete(g_detection_output_queue_m7);
-    }
 
+        if (g_state_update_queue_m7) vQueueDelete(g_state_update_queue_m7);
+        if (g_host_condition_queue_m7) vQueueDelete(g_host_condition_queue_m7);
+
+        if (g_logging_queue_m7) vQueueDelete(g_logging_queue_m7);
+    }
 }

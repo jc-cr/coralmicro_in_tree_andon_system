@@ -11,8 +11,11 @@
 
 
 namespace coralmicro {
+
+    // RPC Callbacks    
+    void tx_logs_to_host(struct jsonrpc_request* request);
+    void rx_from_host(struct jsonrpc_request* request);
+
+    // Task
     void rpc_task(void* parameters);
-    
-    void get_frame(struct jsonrpc_request* request);
-    void get_tof_grid(struct jsonrpc_request* request);
 }
