@@ -42,11 +42,6 @@ namespace coralmicro {
             return false;
         }
 
-        // Print person detection for debugging
-        for (const auto& obj : *results) {
-            printf("Detected person with confidence: %.2f\r\n", obj.score);
-        }
-
         return true;
     }
 

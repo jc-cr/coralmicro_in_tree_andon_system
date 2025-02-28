@@ -6,6 +6,7 @@
 #include "third_party/mjson/src/mjson.h"
 
 #include "m7/m7_queues.hh"
+#include "system_enums.hh"
 
 #include "global_config.hh"
 

@@ -10,7 +10,7 @@
 #include "third_party/nxp/rt1176-sdk/devices/MIMXRT1176/drivers/fsl_gpt.h"
 
 #include "m7/m7_queues.hh"
-#include "system_states.hh"
+#include "system_enums.hh"
 #include "global_config.hh"
 
 // External assembly functions
