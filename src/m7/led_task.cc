@@ -48,58 +48,52 @@ namespace coralmicro {
         
         while (true) {
             // Wait for state updates from the queue with a timeout
-            if (xQueueReceive(g_state_update_queue_m7, &new_state, pdMS_TO_TICKS(100)) == pdTRUE) {
-                // Reset between updates for reliable communication
-                ResetDelay();
+            if (xQueueReceive(g_state_update_queue_m7, &new_state, pdMS_TO_TICKS(10)) == pdTRUE) {
                 
-                // Send same color to all three LEDs
-                switch (new_state) {
-                    case SystemState::UNINITIALIZED:
-                        // WHITE for UNINITIALIZED
-                        for (int i = 0; i < 3; i++) {
-                            SendColor(255, 255, 255);
-                        }
-                        break;
-                        
-                    case SystemState::IDLE:
-                        // BLUE for IDLE
-                        for (int i = 0; i < 3; i++) {
-                            SendColor(0, 0, 255);
-                        }
-                        break;
-                        
-                    case SystemState::WARNING:
-                        // YELLOW for WARNING
-                        for (int i = 0; i < 3; i++) {
-                            SendColor(255, 255, 0);
-                        }
-                        break;
-                        
-                    case SystemState::ERROR:
-                        // RED for ERROR
-                        for (int i = 0; i < 3; i++) {
-                            SendColor(255, 0, 0);
-                        }
-                        break;
-                        
-                    default:
-                        // Default to white if unknown state
-                        for (int i = 0; i < 3; i++) {
-                            SendColor(255, 255, 255);
-                        }
-                        break;
+                // Check
+                if (new_state == current_state) {
+                    continue;
                 }
-                
-                // Update current state after change
-                current_state = new_state;
-                printf("LED color updated for state: %s\r\n", 
-                    current_state == SystemState::IDLE ? "IDLE" :
-                    current_state == SystemState::WARNING ? "WARNING" :
-                    current_state == SystemState::ERROR ? "ERROR" : "UNINITIALIZED");
+                else
+                {
+                    // Send same color to all three LEDs
+                    switch (new_state) {
+                        case SystemState::UNINITIALIZED:
+                            // WHITE for UNINITIALIZED
+                            for (int i = 0; i < 3; i++) {
+                                SendColor(255, 255, 255);
+                            }
+                            break;
+                            
+                        case SystemState::WARNING:
+                            // YELLOW for WARNING
+                            for (int i = 0; i < 3; i++) {
+                                SendColor(255, 255, 0);
+                            }
+                            break;
+                            
+                        case SystemState::STOPPED:
+                            // RED for ERROR
+                            for (int i = 0; i < 3; i++) {
+                                SendColor(255, 0, 0);
+                            }
+                            break;
+                            
+                        default:
+                            // Default to BLUE for all other states
+                            for (int i = 0; i < 3; i++) {
+                                SendColor(0, 0, 255);
+                            }
+                            break;
+                    }
+                    
+                    // Update current state after change
+                    current_state = new_state;
+                }
             }
             
             // Short delay to avoid busy-waiting
-            vTaskDelay(pdMS_TO_TICKS(10));
+            vTaskDelay(pdMS_TO_TICKS(33));
         }
     }
 }

@@ -17,6 +17,7 @@ set(M7_TASK_SOURCES
     src/m7/led_task.cc
     src/m7/gpio_control.s
     src/m7/state_controller_task.cc
+    src/m7/depth_estimation_task.cc
 )
 
 # Define paths for task configuration
@@ -112,6 +113,8 @@ target_compile_options(${PROJECT_NAME}
         -Wall
         -Wextra
         -Werror=unused-function
+        -Werror=unused-variable
+        -Werror=unused-but-set-variable
         $<$<COMPILE_LANGUAGE:C>:-std=c11>
         $<$<COMPILE_LANGUAGE:CXX>:-std=c++17>
 

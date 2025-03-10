@@ -38,9 +38,24 @@ namespace coralmicro {
         CameraData camera_data;
         std::shared_ptr<std::vector<tensorflow::Object>> detections;
         TickType_t timestamp;
+
         TickType_t inference_time;
         
         DetectionData() : detections(std::make_shared<std::vector<tensorflow::Object>>()) {}
+    };
+
+    struct DetectionDepth {
+        tensorflow::Object detection;
+        float depth_mm;
+        bool valid;
+    };
+
+    struct DepthEstimationData {
+        std::vector<DetectionDepth> detection_depths;
+        CameraData camera_data;
+        TickType_t timestamp;
+        TickType_t detection_data_inference_time;
+        TickType_t depth_estimation_time;
     };
 
     struct LoggingData {
@@ -48,14 +63,15 @@ namespace coralmicro {
         // DetectionData detection_data;
     };
 
-
     // Queue handles
     inline QueueHandle_t g_tof_queue_m7;      // Latest TOF frame
     inline QueueHandle_t g_camera_queue_m7;   // Latest camera frame
     inline QueueHandle_t g_detection_output_queue_m7; // Detection results
+    inline QueueHandle_t g_depth_estimation_input_queue_m7; // Depth estimation input
+    inline QueueHandle_t g_depth_estimation_output_queue_m7; // Depth estimation output
 
     inline QueueHandle_t g_state_update_queue_m7; // State updates
-    inline QueueHandle_t g_host_condition_queue_m7; // Host condition updates
+    inline QueueHandle_t g_host_connection_status_queue_m7; // Host condition updates
 
     inline QueueHandle_t g_logging_queue_m7; // Logging data
 
@@ -63,11 +79,18 @@ namespace coralmicro {
     // Queue creation
     inline bool InitQueues() {
         g_tof_queue_m7 = xQueueCreate(1, sizeof(VL53L8CX_ResultsData));
+
         g_camera_queue_m7 = xQueueCreate(1, sizeof(CameraData));
+
         g_detection_output_queue_m7 = xQueueCreate(1, sizeof(DetectionData));
 
+        g_depth_estimation_input_queue_m7 = xQueueCreate(1, sizeof(DetectionData));
+        g_depth_estimation_output_queue_m7 = xQueueCreate(1, sizeof(DepthEstimationData));
+
         g_state_update_queue_m7 = xQueueCreate(1, sizeof(SystemState));
-        g_host_condition_queue_m7 = xQueueCreate(1, sizeof(HostCondition));
+        g_host_connection_status_queue_m7 = xQueueCreate(1, sizeof(HostCondition));
+
+
 
         g_logging_queue_m7 = xQueueCreate(1, sizeof(LoggingData));
         
@@ -81,7 +104,7 @@ namespace coralmicro {
         if (g_detection_output_queue_m7) vQueueDelete(g_detection_output_queue_m7);
 
         if (g_state_update_queue_m7) vQueueDelete(g_state_update_queue_m7);
-        if (g_host_condition_queue_m7) vQueueDelete(g_host_condition_queue_m7);
+        if (g_host_connection_status_queue_m7) vQueueDelete(g_host_connection_status_queue_m7);
 
         if (g_logging_queue_m7) vQueueDelete(g_logging_queue_m7);
     }

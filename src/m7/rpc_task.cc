@@ -1,6 +1,7 @@
 #include "rpc_task.hh"
 
 namespace coralmicro {
+
     // Receive heartbeat from host and update host condition
     void rx_from_host(struct jsonrpc_request* request) {
         // Extract host state from request as an integer
@@ -26,20 +27,23 @@ namespace coralmicro {
         }
         
         // Only continue if connection check is not 0
-        if (host_connection_check == 0) {
+        if (host_connection_check != 0) {
+            // Set host condition to CONNECTED and send to state controller via queue
+            HostConnectionStatus new_condition = HostConnectionStatus::CONNECTED;
+            if (xQueueOverwrite(g_host_condition_queue_m7, &new_condition) != pdTRUE) {
+                jsonrpc_return_error(request, -1, "Failed to update host condition", NULL);
+                return;
+            }
+            
+            // Return a clean success response
+            jsonrpc_return_success(request, "{}");
+        }
+
+        else{
             jsonrpc_return_error(request, -1, "Invalid connection check value", NULL);
+            
             return;
         }
-        
-        // Set host condition to CONNECTED and send to state controller via queue
-        HostCondition new_condition = HostCondition::CONNECTED;
-        if (xQueueOverwrite(g_host_condition_queue_m7, &new_condition) != pdTRUE) {
-            jsonrpc_return_error(request, -1, "Failed to update host condition", NULL);
-            return;
-        }
-        
-        // Return a clean success response
-        jsonrpc_return_success(request, "{}");
     }
     
     // Transmit logging data to host with improved error handling
