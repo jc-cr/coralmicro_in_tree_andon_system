@@ -3,28 +3,29 @@
 
 enum class HostState {
     // Host ot use PACKML state defintions
+
     UNDEFINED,
-    // Inactive states
+    // Red states
     STOPPED,
-    // Active states
+    // Green states
     STARTING,
     IDLE,
     SUSPENDED,
     EXECUTE,
-    // Inactive states
+    // Red states
     STOPPING,
-    // Aborting states
+    // Red states
     ABORTING,
     ABORTED,
-    // Active states
+    // Green states
     HOLDING,
     HELD,
     RESETTING,
     SUSPENDING,
     UNSUSPENDING,
-    // Inactive states
+    // Red states
     CLEARING,
-    // Active states
+    // Green states
     UNHOLDING,
     COMPLETING,
     COMPLETE,
@@ -36,19 +37,23 @@ enum class SystemState {
     SCANNING,
     WARNING,
     STOPPED,
-    HOST_ACTIVE_STATE,
-    HOST_INACTIVE_STATE,
-    HOST_ABORTING
+    HOST_ACTIVE_STATE, 
+    HOST_STOPPED_STATE
 };
 
 enum class HostConnectionStatus {
     UNCONNECTED,
     CONNECTED,
-    ERROR,
 };
 
 enum class SystemFault {
     NO_FAULT,
     ESTOPPED,
     PROGRAM_ERROR
+};
+
+enum class OperatingMode {
+    HOST_DEPENDENT, // Implement later
+    HOST_INDEPENDENT, // Implement later
+    MIXED
 };

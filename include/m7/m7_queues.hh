@@ -72,6 +72,7 @@ namespace coralmicro {
 
     inline QueueHandle_t g_state_update_queue_m7; // State updates
     inline QueueHandle_t g_host_connection_status_queue_m7; // Host condition updates
+    inline QueueHandle_t g_host_state_queue_m7; // Host state updates
 
     inline QueueHandle_t g_logging_queue_m7; // Logging data
 
@@ -88,7 +89,9 @@ namespace coralmicro {
         g_depth_estimation_output_queue_m7 = xQueueCreate(1, sizeof(DepthEstimationData));
 
         g_state_update_queue_m7 = xQueueCreate(1, sizeof(SystemState));
-        g_host_connection_status_queue_m7 = xQueueCreate(1, sizeof(HostCondition));
+
+        g_host_connection_status_queue_m7 = xQueueCreate(1, sizeof(HostConnectionStatus));
+        g_host_state_queue_m7 = xQueueCreate(1, sizeof(HostState));
 
 
 
@@ -105,6 +108,7 @@ namespace coralmicro {
 
         if (g_state_update_queue_m7) vQueueDelete(g_state_update_queue_m7);
         if (g_host_connection_status_queue_m7) vQueueDelete(g_host_connection_status_queue_m7);
+        if (g_host_state_queue_m7) vQueueDelete(g_host_state_queue_m7);
 
         if (g_logging_queue_m7) vQueueDelete(g_logging_queue_m7);
     }
