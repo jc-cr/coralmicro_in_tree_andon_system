@@ -6,10 +6,7 @@
 
 // Task implementations
 #include "m7/camera_task.hh"
-#include "m7/depth_estimation_task.hh"
 #include "m7/inference_task.hh"
-#include "m7/led_task.hh"
-#include "m7/rpc_task.hh"
 #include "m7/state_controller_task.hh"
 #include "m7/tof_task.hh"
 
@@ -51,32 +48,8 @@ constexpr TaskConfig kM7TaskConfigs[] = {
         nullptr
     },
     {
-        rpc_task,
-        "RPC_Task",
-        STACK_SIZE_LARGE,
-        0,
-        TASK_PRIORITY_MEDIUM,
-        nullptr
-    },
-    {
-        led_task,
-        "LED_Task",
-        STACK_SIZE_SMALL,
-        0,
-        TASK_PRIORITY_MEDIUM,
-        nullptr
-    },
-    {
         state_controller_task,
         "State_Controller_Task",
-        STACK_SIZE_MEDIUM,
-        0,
-        TASK_PRIORITY_MEDIUM,
-        nullptr
-    },
-    {
-        depth_estimation_task,
-        "Depth_Estimation_Task",
         STACK_SIZE_LARGE,
         0,
         TASK_PRIORITY_MEDIUM,

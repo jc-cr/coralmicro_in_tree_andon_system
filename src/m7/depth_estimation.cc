@@ -1,5 +1,5 @@
-// depth_estimation_task.cc
-#include "m7/depth_estimation_task.hh"
+// depth_estimation.cc
+#include "m7/depth_estimation.hh"
 
 namespace coralmicro {
 
@@ -92,60 +92,40 @@ namespace coralmicro {
         return sum / depths.size();
     }
 
-    void depth_estimation_task(void* parameters) {
-        (void)parameters;
-        printf("Depth estimation task starting...\r\n");
-        
-        DetectionData detection_data;
-        VL53L8CX_ResultsData tof_data;
+    DepthEstimationData depth_estimation(DetectionData& detection_data) {
         DepthEstimationData output_data;
+        VL53L8CX_ResultsData tof_data;
         
-        TickType_t last_wake_time = xTaskGetTickCount();
-        const TickType_t estimation_period = pdMS_TO_TICKS(100); // 10 Hz
+        // Start timing
+        TickType_t start_time = xTaskGetTickCount();
         
-        while (true) {
-            // Start timing
-            TickType_t start_time = xTaskGetTickCount();
+        // Get latest TOF data from queue - needed for depth calculation
+        if (xQueuePeek(g_tof_queue_m7, &tof_data, 0) == pdTRUE) {
+            // Clear previous results
+            output_data.detection_depths->clear();
             
-            // Get latest detection data
-            if (xQueuePeek(g_detection_output_queue_m7, &detection_data, 0) == pdTRUE) {
-                // Get latest TOF data
-                if (xQueuePeek(g_tof_queue_m7, &tof_data, 0) == pdTRUE) {
-                    
-                    // Clear previous results
-                    output_data.detection_depths.clear();
-                    
-                    // Process each detection
-                    for (const auto& detection : *(detection_data.detections)) {
-                        DetectionDepth result;
-                        result.detection = detection;
-                        result.depth_mm = compute_depth(detection, tof_data, detection_data.camera_data);
-                        result.valid = (result.depth_mm > 0);
-                        
-                        if (result.valid) {
-                            printf("Detection (id=%d) depth: %.1f mm\r\n", 
-                                   detection.id, result.depth_mm);
-                        }
-                        
-                        output_data.detection_depths.push_back(result);
-                    }
-                    
-                    // Set metadata
-                    output_data.camera_data = detection_data.camera_data;
-                    output_data.timestamp = xTaskGetTickCount();
-                    output_data.detection_data_inference_time = detection_data.inference_time;
-                    output_data.depth_estimation_time = xTaskGetTickCount() - start_time;
-                    
-                    // Send to output queue
-                    if (xQueueOverwrite(g_depth_estimation_output_queue_m7, &output_data) != pdTRUE) {
-                        printf("ERROR: Failed to send depth estimation result\r\n");
-                    }
+            for (const auto& detection : *(detection_data.detections)) {
+                DetectionDepth result;
+                result.detection = detection;  // Store the entire detection object
+                result.depth_mm = compute_depth(detection, tof_data, detection_data.camera_data);
+                result.valid = (result.depth_mm > 0);
+                
+                if (result.valid) {
+                    printf("Detection (id=%d) depth: %.1f mm\r\n", 
+                        detection.id, result.depth_mm);
                 }
+                
+                output_data.detection_depths->push_back(result);  // Use arrow operator
             }
             
-            // Maintain a consistent update rate
-            vTaskDelayUntil(&last_wake_time, estimation_period);
+            // Set metadata
+            output_data.camera_data = detection_data.camera_data;
+            output_data.timestamp = xTaskGetTickCount();
+            output_data.detection_data_inference_time = detection_data.inference_time;
+            output_data.depth_estimation_time = xTaskGetTickCount() - start_time;
         }
+        
+        return output_data;
     }
 
 } // namespace coralmicro

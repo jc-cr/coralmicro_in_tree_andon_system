@@ -51,24 +51,24 @@ namespace coralmicro {
     };
 
     struct DepthEstimationData {
-        std::vector<DetectionDepth> detection_depths;
+        std::shared_ptr<std::vector<DetectionDepth>> detection_depths;  // Changed to shared_ptr
         CameraData camera_data;
         TickType_t timestamp;
         TickType_t detection_data_inference_time;
         TickType_t depth_estimation_time;
+        
+        DepthEstimationData() : detection_depths(std::make_shared<std::vector<DetectionDepth>>()) {}
     };
 
     struct LoggingData {
         SystemState state;
-        // DetectionData detection_data;
+        DepthEstimationData depth_estimation_data;
     };
 
     // Queue handles
     inline QueueHandle_t g_tof_queue_m7;      // Latest TOF frame
     inline QueueHandle_t g_camera_queue_m7;   // Latest camera frame
     inline QueueHandle_t g_detection_output_queue_m7; // Detection results
-    inline QueueHandle_t g_depth_estimation_input_queue_m7; // Depth estimation input
-    inline QueueHandle_t g_depth_estimation_output_queue_m7; // Depth estimation output
 
     inline QueueHandle_t g_state_update_queue_m7; // State updates
     inline QueueHandle_t g_host_connection_status_queue_m7; // Host condition updates
@@ -85,8 +85,6 @@ namespace coralmicro {
 
         g_detection_output_queue_m7 = xQueueCreate(1, sizeof(DetectionData));
 
-        g_depth_estimation_input_queue_m7 = xQueueCreate(1, sizeof(DetectionData));
-        g_depth_estimation_output_queue_m7 = xQueueCreate(1, sizeof(DepthEstimationData));
 
         g_state_update_queue_m7 = xQueueCreate(1, sizeof(SystemState));
 

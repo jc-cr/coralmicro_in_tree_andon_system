@@ -30,7 +30,7 @@ namespace coralmicro {
         if (host_connection_check != 0) {
             // Set host condition to CONNECTED and send to state controller via queue
             HostConnectionStatus new_condition = HostConnectionStatus::CONNECTED;
-            if (xQueueOverwrite(g_host_condition_queue_m7, &new_condition) != pdTRUE) {
+            if (xQueueOverwrite(g_host_connection_status_queue_m7, &new_condition) != pdTRUE) {
                 jsonrpc_return_error(request, -1, "Failed to update host condition", NULL);
                 return;
             }
