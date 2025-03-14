@@ -37,33 +37,21 @@ namespace coralmicro {
     struct DetectionData {
         CameraData camera_data;
         std::shared_ptr<std::vector<tensorflow::Object>> detections;
-        TickType_t timestamp;
 
+        TickType_t timestamp;
         TickType_t inference_time;
         
         DetectionData() : detections(std::make_shared<std::vector<tensorflow::Object>>()) {}
     };
 
-    struct DetectionDepth {
-        tensorflow::Object detection;
-        float depth_mm;
-        bool valid;
-    };
-
     struct DepthEstimationData {
-        std::shared_ptr<std::vector<DetectionDepth>> detection_depths;  // Changed to shared_ptr
-        CameraData camera_data;
+        // Simply reference the same detection data
+        DetectionData detection_data;
+        std::vector<float> depths;  // Each index corresponds to a detection index
         TickType_t timestamp;
-        TickType_t detection_data_inference_time;
         TickType_t depth_estimation_time;
-        
-        DepthEstimationData() : detection_depths(std::make_shared<std::vector<DetectionDepth>>()) {}
     };
 
-    struct LoggingData {
-        SystemState state;
-        DepthEstimationData depth_estimation_data;
-    };
 
     // Queue handles
     inline QueueHandle_t g_tof_queue_m7;      // Latest TOF frame
@@ -93,7 +81,6 @@ namespace coralmicro {
 
 
 
-        g_logging_queue_m7 = xQueueCreate(1, sizeof(LoggingData));
         
         return (g_tof_queue_m7 != nullptr && g_camera_queue_m7 != nullptr);
     }
