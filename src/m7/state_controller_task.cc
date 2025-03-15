@@ -17,8 +17,8 @@ namespace coralmicro{
         // Setup detection data
         DetectionData detection_data;
         DepthEstimationData depth_estimation_data;
-        VL53L8CX_ResultsData results_data = {};
 
+        static VL53L8CX_ResultsData tof_data;
 
         SystemState new_state = current_state;
         
@@ -26,33 +26,9 @@ namespace coralmicro{
             // Default next state is current state
             new_state = current_state;
             
-            // Try to get latest detection data
-            if (xQueueReceive(g_detection_output_queue_m7, &detection_data, 0) == pdTRUE) {
-                // Check that the pointer is valid before trying to access it
-                if (detection_data.detections && detection_data.detections->size() > 0) {
-                    printf("Person detected!\r\n");
-                    new_state = SystemState::WARNING;
-                } else {
-                    new_state = SystemState::HOST_ACTIVE_STATE;
-                }
-            }
-            
-            // Check distance if in warning state
-            if (current_state == SystemState::WARNING) {
-
-                // Call TOF queue
-
-                // Ensure detection data is valid before proceeding
-                if (detection_data.detections && !detection_data.detections->empty()) {
-                    printf("Checking distance...\r\n");
-                    // Now call the depth estimation function with valid data
-                    depth_estimation(detection_data, depth_estimation_data);
-                    
-                    // Process depth information (add your logic here)
-                    if (!depth_estimation_data.depths.empty()) {
-
-                    }
-                }
+            if (xQueueReceive(g_tof_queue_m7, &tof_data, 0) == pdTRUE) {
+                // Print
+                printf("TOF data received\r\n");
             }
             
             // Update system state if it has changed

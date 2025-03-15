@@ -12,39 +12,6 @@
 namespace coralmicro {
 namespace {
 
-
-    bool init_tof_device() {
-        // Initialize GPIO first
-        if (!init_gpio()) {
-            printf("Failed to initialize TOF GPIO\r\n");
-            return false;
-        }
-
-        // Platform initialization with proper cleanup
-        VL53L8CX_Platform platform = {};
-        if (!vl53l8cx::PlatformInit(&platform, kI2c, kAddress)) {
-            printf("Platform initialization failed\r\n");
-            return false;
-        }
-
-        // Create and initialize device instance
-        g_tof_device = std::make_unique<VL53L8CX_Configuration>();
-        if (!g_tof_device) {
-            printf("Failed to allocate device configuration\r\n");
-            return false;
-        }
-
-        g_tof_device->platform = platform;
-
-        if (!init_sensor(g_tof_device.get())) {
-            printf("Sensor initialization failed\r\n");
-            return false;
-        }
-
-        return true;
-    }
-
-
     // Properly allocate tensor arena in SDRAM section
     STATIC_TENSOR_ARENA_IN_SDRAM(tensor_arena_buffer, g_tensor_arena_size);
 
@@ -67,6 +34,9 @@ namespace {
             printf("ERROR: Failed to load model file\r\n");
             return false;
         }
+
+        // Add a delay
+        vTaskDelay(pdMS_TO_TICKS(100));
         
         return true;
     }
@@ -85,6 +55,56 @@ namespace {
         g_tpu_manager_singleton = EdgeTpuManager::GetSingleton();
 
         printf("EdgeTPU initialized successfully\r\n");
+
+        // Add a delay to allow the TPU to stabilize
+        vTaskDelay(pdMS_TO_TICKS(200));
+
+        return true;
+    }
+
+    bool init_tof_device() {
+
+        // Initialize GPIO first
+        if (!init_gpio()) {
+            printf("Failed to initialize TOF GPIO\r\n");
+            return false;
+        }
+
+        // Platform initialization with proper cleanup
+        VL53L8CX_Platform platform = {};
+        if (!vl53l8cx::PlatformInit(&platform, kI2c, kAddress)) {
+            printf("Platform initialization failed\r\n");
+            return false;
+        }
+
+
+        // Create and initialize device instance
+        g_tof_device = std::make_unique<VL53L8CX_Configuration>();
+        if (!g_tof_device) {
+            printf("Failed to allocate device configuration\r\n");
+            return false;
+        }
+
+        g_tof_device->platform = platform;
+
+        if (!init_sensor(g_tof_device.get())) {
+            printf("Sensor initialization failed\r\n");
+            return false;
+        }
+
+        // Allocate results structure on heap
+        g_tof_results = std::make_unique<VL53L8CX_ResultsData>();
+        if (!g_tof_results) {
+            printf("Failed to allocate results structure\r\n");
+            return false;
+        }
+
+
+         printf("sizeof(VL53L8CX_ResultsData) in main: %u bytes, alignment: %u\r\n",
+        sizeof(VL53L8CX_ResultsData),
+        alignof(VL53L8CX_ResultsData));
+
+
         return true;
     }
 
@@ -109,6 +129,8 @@ namespace {
             vTaskSuspend(nullptr);
         }
 
+        // Add a small delay
+
         if (!load_model()) {
             printf("Failed to load model\r\n");
             vTaskSuspend(nullptr);
@@ -123,6 +145,8 @@ namespace {
             printf("Failed to initialize TOF device\r\n");
             vTaskSuspend(nullptr);
         }
+
+        vTaskDelay(pdMS_TO_TICKS(500));
 
         // Initialize M7 tasks
         setup_tasks();

@@ -4,23 +4,6 @@
 namespace coralmicro {
 
 
-    bool init_gpio() {
-
-        printf("GPIO Power-on sequence starting...\r\n");
-        
-        // Configure LPn pin
-        GpioSetMode(kLpnPin, GpioMode::kOutput);
-        
-        // Reset sequence
-        GpioSet(kLpnPin, false);  // Assert reset
-        vTaskDelay(pdMS_TO_TICKS(100));  // Increased delay
-        GpioSet(kLpnPin, true);   // Release reset
-        vTaskDelay(pdMS_TO_TICKS(100));  // Increased delay
-        
-        printf("GPIO initialization complete\r\n");
-        return true;
-    }
-
     const char* get_error_string(uint8_t status) {
         switch(status) {
             case VL53L8CX_STATUS_OK:
@@ -54,12 +37,26 @@ namespace coralmicro {
             get_error_string(status));
     }
 
+    bool init_gpio() {
+
+        printf("GPIO Power-on sequence starting...\r\n");
+        
+        // Configure LPn pin
+        GpioSetMode(kLpnPin, GpioMode::kOutput);
+        
+        // Reset sequence
+        GpioSet(kLpnPin, false);  // Assert reset
+        vTaskDelay(pdMS_TO_TICKS(100));  // Increased delay
+        GpioSet(kLpnPin, true);   // Release reset
+        vTaskDelay(pdMS_TO_TICKS(100));  // Increased delay
+        
+        printf("GPIO initialization complete\r\n");
+        return true;
+    }
+
     bool init_sensor(VL53L8CX_Configuration* dev) {
         uint8_t status;
         uint8_t isAlive = 0;
-        
-        // Add delay after power-on
-        vTaskDelay(pdMS_TO_TICKS(10));
         
         // Check if sensor is alive
         status = vl53l8cx_is_alive(dev, &isAlive);
@@ -68,6 +65,8 @@ namespace coralmicro {
             return false;
         }
         printf("Sensor is alive\r\n");
+
+        vTaskDelay(pdMS_TO_TICKS(50));  // Allow time for sensor to stabilize
         
         // Initialize sensor
         status = vl53l8cx_init(dev);
@@ -76,6 +75,8 @@ namespace coralmicro {
             return false;
         }
         printf("Sensor initialized\r\n");
+
+        vTaskDelay(pdMS_TO_TICKS(50));  // Allow time for sensor to stabilize
         
         
         status = vl53l8cx_set_resolution(dev, g_tof_resolution.load());
@@ -85,6 +86,8 @@ namespace coralmicro {
         }
         printf("Resolution set to 4x4\r\n");
 
+        vTaskDelay(pdMS_TO_TICKS(50));  // Allow time for sensor to stabilize
+
         // Set ranging mode to continuous
         status = vl53l8cx_set_ranging_mode(dev, VL53L8CX_RANGING_MODE_CONTINUOUS);
         if (status != VL53L8CX_STATUS_OK) {
@@ -92,6 +95,8 @@ namespace coralmicro {
             return false;
         }
         printf("Ranging mode set to continuous\r\n");
+
+        vTaskDelay(pdMS_TO_TICKS(50));  // Allow time for sensor to stabilize
         
         // Increase ranging frequency for better temporal resolution
         status = vl53l8cx_set_ranging_frequency_hz(dev, kRangingFrequency); // Max 60Hz for 4x4
@@ -101,6 +106,8 @@ namespace coralmicro {
         }
         printf("Ranging frequency set to %i Hz", kRangingFrequency);
 
+        vTaskDelay(pdMS_TO_TICKS(50));  // Allow time for sensor to stabilize
+
         // Set target order to closest first
         status = vl53l8cx_set_target_order(dev, VL53L8CX_TARGET_ORDER_CLOSEST);
         if (status != VL53L8CX_STATUS_OK) {
@@ -109,6 +116,8 @@ namespace coralmicro {
         }
         printf("Target order set to closest first\r\n");
 
+        vTaskDelay(pdMS_TO_TICKS(50));  // Allow time for sensor to stabilize
+
         // Reduce sharpener to improve detection of distant objects
         status = vl53l8cx_set_sharpener_percent(dev, kSharpnerValue);
         if (status != VL53L8CX_STATUS_OK) {
@@ -116,6 +125,8 @@ namespace coralmicro {
             return false;
         }
         printf("Sharpener set to %i%%\r\n", kSharpnerValue);
+
+        vTaskDelay(pdMS_TO_TICKS(100));  // Allow time for sensor to stabilize
 
         return true;
     }
@@ -126,25 +137,12 @@ namespace coralmicro {
         
         printf("TOF task starting...\r\n");
 
-        uint8_t status;
-        
-        
-        // Start ranging
-        status = vl53l8cx_start_ranging(g_tof_device.get());
+        uint8_t status = vl53l8cx_start_ranging(g_tof_device.get());
         if (status != VL53L8CX_STATUS_OK) {
             print_sensor_error("starting ranging", status);
             vTaskSuspend(nullptr);
         }
         
-        
-        // Allocate results structure on heap
-        auto results = std::make_unique<VL53L8CX_ResultsData>();
-        if (!results) {
-            printf("Failed to allocate results structure\r\n");
-            vTaskSuspend(nullptr);
-        }
-
-       printf("TOF task initialized successfully\r\n");
 
         int Hz = kRangingFrequency;
         TickType_t last_wake_time = xTaskGetTickCount();
@@ -157,7 +155,9 @@ namespace coralmicro {
 
 
         bool data_sampled_printed_flag = false;
+        
 
+       printf("TOF task initialized successfully\r\n");
 
         while (true) {
             uint8_t isReady = 0;
@@ -166,7 +166,8 @@ namespace coralmicro {
             status = vl53l8cx_check_data_ready(g_tof_device.get(), &isReady);
             
             if (status == VL53L8CX_STATUS_OK && isReady) {
-                status = vl53l8cx_get_ranging_data(g_tof_device.get(), results.get());
+
+                status = vl53l8cx_get_ranging_data(g_tof_device.get(), g_tof_results.get());
 
                 if (status == VL53L8CX_STATUS_OK) {
 
@@ -183,7 +184,7 @@ namespace coralmicro {
                             printf("R%d:", row);
                             for(int col = 0; col < 4; col++) {
                                 int idx = row * 4 + col;
-                                printf(" %4d", results->distance_mm[idx]);
+                                printf(" %4d", g_tof_results->distance_mm[idx]);
                             }
                             printf("\r\n");
                         }
@@ -191,7 +192,7 @@ namespace coralmicro {
                     }
 
                     // Send data to queue
-                    if (xQueueOverwrite(g_tof_queue_m7, results.get()) != pdTRUE) {
+                    if (xQueueOverwrite(g_tof_queue_m7, g_tof_results.get()) != pdTRUE) {
                         printf("Failed to send TOF data to queue\r\n");
                     }
                 } else {
