@@ -15,9 +15,8 @@ namespace coralmicro{
         }
         
         // Setup detection data
-        DetectionData detection_data;
-        DepthEstimationData depth_estimation_data;
-
+        static DetectionData detection_data;
+        static DepthEstimationData depth_estimation_data;
         static VL53L8CX_ResultsData tof_data;
 
         SystemState new_state = current_state;
@@ -25,12 +24,36 @@ namespace coralmicro{
         while (true) {
             // Default next state is current state
             new_state = current_state;
+
+            // DEBUG
+            new_state = SystemState::SCANNING;
             
-            if (xQueueReceive(g_tof_queue_m7, &tof_data, 0) == pdTRUE) {
-                // Print
-                printf("TOF data received\r\n");
+            // Check 
+            if (new_state == SystemState::SCANNING){
+            // Check if a person has been detected in the latest detection data
+            // this done by checking if detection_data.detections is not empty
+                if (xQueueReceive(g_detection_output_queue_m7, &detection_data, 3) == pdTRUE) {
+                    if (detection_data.detections && !detection_data.detections->empty()) {
+                        // Person detected, change state to WARNING
+                        new_state = SystemState::WARNING;
+                    } 
+                } 
             }
-            
+
+            // If in WARNING state, check if person in danger distance
+            if (new_state == SystemState::WARNING){
+                printf("Checking for danger distance\r\n");
+                // Get the latest TOF data
+                if (xQueueReceive(g_tof_queue_m7, &tof_data, 3) == pdTRUE) {
+
+                    // Perfrom depth estimation
+                    depth_estimation(detection_data, tof_data, depth_estimation_data);
+
+                    // TODO
+
+                }
+            }
+
             // Update system state if it has changed
             if (new_state != current_state) {
                 xQueueOverwrite(g_state_update_queue_m7, &new_state);

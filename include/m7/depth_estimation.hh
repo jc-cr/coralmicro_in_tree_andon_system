@@ -15,7 +15,9 @@
 
 namespace coralmicro {
 
-    void depth_estimation(const DetectionData& detection_data, DepthEstimationData& output_data);
+    void depth_estimation(const DetectionData& detection_data, 
+        const VL53L8CX_ResultsData& tof_data,
+        DepthEstimationData& output_data);
 
 } // namespace coralmicro
 

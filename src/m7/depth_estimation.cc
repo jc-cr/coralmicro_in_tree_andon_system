@@ -3,7 +3,9 @@
 
 namespace coralmicro {
 
-    void depth_estimation(const DetectionData& detection_data, DepthEstimationData& depth_estimation_data) {
+    void depth_estimation(const DetectionData& detection_data,
+        const VL53L8CX_ResultsData& tof_data,
+        DepthEstimationData& depth_estimation_data) {
         // Check if detection data is valid
         if (!detection_data.detections || detection_data.detections->empty()) {
             printf("No detections available for depth estimation!\r\n");
