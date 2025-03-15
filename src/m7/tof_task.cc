@@ -3,12 +3,6 @@
 
 namespace coralmicro {
 
-    bool print_data_sample_flag = false;
-
-
-    void print_task_starting() {
-        printf("TOF task starting...\r\n");
-    }
 
     bool init_gpio() {
 
@@ -126,14 +120,11 @@ namespace coralmicro {
         return true;
     }
 
-    void print_task_ok() {
-        printf("TOF task started successfully\r\n");
-    }
 
     void tof_task(void* parameters) {
         (void)parameters;
         
-        print_task_starting();
+        printf("TOF task starting...\r\n");
 
         uint8_t status;
         
@@ -153,12 +144,20 @@ namespace coralmicro {
             vTaskSuspend(nullptr);
         }
 
-        print_task_ok();
-        
+       printf("TOF task initialized successfully\r\n");
 
         int Hz = kRangingFrequency;
         TickType_t last_wake_time = xTaskGetTickCount();
         const TickType_t frequency = pdMS_TO_TICKS(1000 / Hz);
+
+
+       // Data updating sanity check every 10 seconds
+        const TickType_t  data_health_check_time = pdMS_TO_TICKS(10000);
+        TickType_t last_data_health_check_time = xTaskGetTickCount();
+
+
+        bool data_sampled_printed_flag = false;
+
 
         while (true) {
             uint8_t isReady = 0;
@@ -170,8 +169,14 @@ namespace coralmicro {
                 status = vl53l8cx_get_ranging_data(g_tof_device.get(), results.get());
 
                 if (status == VL53L8CX_STATUS_OK) {
+
+                    if ((xTaskGetTickCount() - last_data_health_check_time) >= data_health_check_time) {
+                        data_sampled_printed_flag = false;
+                        last_data_health_check_time = xTaskGetTickCount();
+                    }
+
                     // Only print once to reduce console output load
-                    if (!print_data_sample_flag) {
+                    if (!data_sampled_printed_flag) {
                         printf("\nTOF Grid (mm):\r\n");
                         printf("    C0    C1    C2    C3\r\n");
                         for(int row = 0; row < 4; row++) {
@@ -182,7 +187,7 @@ namespace coralmicro {
                             }
                             printf("\r\n");
                         }
-                        print_data_sample_flag = true;
+                        data_sampled_printed_flag = true;
                     }
 
                     // Send data to queue

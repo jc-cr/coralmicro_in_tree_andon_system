@@ -146,9 +146,6 @@ namespace coralmicro {
                     *(detection_result.detections) = detections;  // Use copy instead of move
                     detection_result.inference_time = xTaskGetTickCount() - detection_result.timestamp;
 
-                    // Print detection info
-                    printf("Detected %d objects in %d ms\r\n", detections.size(), detection_result.inference_time);
-
                     if (xQueueOverwrite(g_detection_output_queue_m7, &detection_result) != pdTRUE) {
                         printf("ERROR: Failed to send detection result\r\n");
                     }

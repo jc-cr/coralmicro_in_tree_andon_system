@@ -17,6 +17,7 @@ set(M7_TASK_SOURCES
 #    src/m7/led_task.cc
     src/m7/gpio_control.s
     src/m7/state_controller_task.cc
+
     src/m7/depth_estimation.cc
 )
 
@@ -69,7 +70,6 @@ add_executable_m7(${PROJECT_NAME}
 
     DATA
     ${CMAKE_CURRENT_SOURCE_DIR}/models/tf2_ssd_mobilenet_v2_coco17_ptq_edgetpu.tflite
-
 )
 
 # Set include directories for M7
@@ -113,7 +113,6 @@ target_compile_options(${PROJECT_NAME}
         -Wall
         -Wextra
         -Werror=unused-function
-        -Werror=unused-variable
         -Werror=unused-but-set-variable
         $<$<COMPILE_LANGUAGE:C>:-std=c11>
         $<$<COMPILE_LANGUAGE:CXX>:-std=c++17>

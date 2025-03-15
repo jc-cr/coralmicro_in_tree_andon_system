@@ -17,6 +17,9 @@ namespace coralmicro{
         // Setup detection data
         DetectionData detection_data;
         DepthEstimationData depth_estimation_data;
+        VL53L8CX_ResultsData results_data = {};
+
+
         SystemState new_state = current_state;
         
         while (true) {
@@ -36,23 +39,19 @@ namespace coralmicro{
             
             // Check distance if in warning state
             if (current_state == SystemState::WARNING) {
-                printf("Checking distance...\r\n");
-                
+
+                // Call TOF queue
+
                 // Ensure detection data is valid before proceeding
                 if (detection_data.detections && !detection_data.detections->empty()) {
-                    printf("Processing depth estimation...\r\n");
-                    
+                    printf("Checking distance...\r\n");
                     // Now call the depth estimation function with valid data
                     depth_estimation(detection_data, depth_estimation_data);
-                    
-                    printf("Depth estimation complete!\r\n");
                     
                     // Process depth information (add your logic here)
                     if (!depth_estimation_data.depths.empty()) {
 
                     }
-                } else {
-                    printf("Warning state but no valid detection data available\r\n");
                 }
             }
             
