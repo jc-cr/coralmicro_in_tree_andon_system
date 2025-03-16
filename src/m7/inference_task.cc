@@ -4,9 +4,9 @@ namespace coralmicro {
 
 
     bool detect_objects(tflite::MicroInterpreter* interpreter, 
-                        const CameraData& camera_data,
-                        std::vector<tensorflow::Object>* results) {
-        if (!results || !camera_data.image_data) return false;
+                    const CameraData& camera_data,
+                    DetectionData* result) {
+        if (!result || !camera_data.image_data) return false;
         
         auto* input_tensor = interpreter->input_tensor(0);
         if (!input_tensor) {
@@ -23,28 +23,37 @@ namespace coralmicro {
             return false;
         }
         
-        // Get results after inference is complete
-        *results = tensorflow::GetDetectionResults(interpreter, kDetectionThreshold, 3);
+        // Get results after inference is complete with a temporary vector
+        std::vector<tensorflow::Object> temp_results = 
+            tensorflow::GetDetectionResults(interpreter, kDetectionThreshold, g_max_detections_per_inference);
 
         // If no results, return
-        if (results->empty()) {
+        if (temp_results.empty()) {
+            result->detection_count = 0;
             return false;
         }
 
         // Filter for person class (COCO class ID 0)
-        results->erase(
-            std::remove_if(results->begin(), results->end(),
+        temp_results.erase(
+            std::remove_if(temp_results.begin(), temp_results.end(),
                         [](const tensorflow::Object& obj) { return obj.id != 0; }),
-            results->end());
+            temp_results.end());
         
         // If no results after filter, return
-        if (results->empty()) {
+        if (temp_results.empty()) {
+            result->detection_count = 0;
             return false;
+        }
+
+        // Copy detections to the fixed array
+        result->detection_count = 0;
+        for (size_t i = 0; i < temp_results.size() && i < g_max_detections_per_inference; i++) {
+            result->detections[i] = temp_results[i];
+            result->detection_count++;
         }
 
         return true;
     }
-
 
     void inference_task(void* parameters) {
         (void)parameters;
@@ -118,47 +127,37 @@ namespace coralmicro {
         printf("Inference setup complete. Model input dimensions: %dx%d\r\n",
             input_tensor->dims->data[1], input_tensor->dims->data[2]);
         
-        // Main inference loop
-        CameraData camera_data;
-        
+    // Main inference loop
+        static CameraData camera_data;
+        static DetectionData detection_result;
         
         // Inference Hz
         int Hz = 10;
         const TickType_t inference_period = pdMS_TO_TICKS(1000 / Hz);
         TickType_t last_wake_time = xTaskGetTickCount();
-
-
-        DetectionData detection_result;
         
         while (true) {
             // Try to receive camera data
             if (xQueueReceive(g_camera_queue_m7, &camera_data, 0) == pdTRUE) {
-
-                detection_result.camera_data = camera_data;
                 detection_result.timestamp = xTaskGetTickCount();
+
+                // Copy camera data to detection result
+                detection_result.camera_data = camera_data;
                 
-                std::vector<tensorflow::Object> detections;
-                
-                // Update queu with detection results if objects are detected
-                if (detect_objects(&interpreter, detection_result.camera_data, &detections)) {
-                    
-                    detection_result.detections->clear();
-                    *(detection_result.detections) = detections;  // Use copy instead of move
+                // Perform detection
+                if (detect_objects(&interpreter, camera_data, &detection_result)) {
+                    // Success - detection_count already set in detect_objects
                     detection_result.inference_time = xTaskGetTickCount() - detection_result.timestamp;
-
-                    if (xQueueOverwrite(g_detection_output_queue_m7, &detection_result) != pdTRUE) {
-                        printf("ERROR: Failed to send detection result\r\n");
-                    }
-
-                // Otherwise set detection to empty
-                } else {
-                    detection_result.detections->clear();
-
-                    detection_result.inference_time = 0;
-                    
-                    if (xQueueOverwrite(g_detection_output_queue_m7, &detection_result) != pdTRUE) {
-                        printf("ERROR: Failed to send detection result\r\n");
-                    }
+                } 
+                else {
+                    // No detections or error
+                    detection_result.detection_count = 0;
+                    detection_result.inference_time = xTaskGetTickCount() - detection_result.timestamp;
+                }
+                
+                // Send results to queue regardless of detection success
+                if (xQueueOverwrite(g_detection_output_queue_m7, &detection_result) != pdTRUE) {
+                    printf("ERROR: Failed to send detection result\r\n");
                 }
             }
 

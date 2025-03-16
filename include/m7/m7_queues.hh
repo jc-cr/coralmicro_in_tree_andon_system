@@ -21,35 +21,41 @@ extern "C" {
 #include "libs/tensorflow/utils.h"
 
 #include "system_enums.hh"
+#include "global_config.hh"
 
 namespace coralmicro {
 
     struct CameraData {
-        uint32_t width;
+        uint32_t width; 
         uint32_t height;
-        CameraFormat format;
-        TickType_t timestamp;
-        std::shared_ptr<std::vector<uint8_t>> image_data;
+        CameraFormat format; // kRGB, kYUV, etc.
 
+        TickType_t timestamp; // timestamp of creation
+
+        std::shared_ptr<std::vector<uint8_t>> image_data; // Shared pointer to image data buffer
         CameraData() : image_data(std::make_shared<std::vector<uint8_t>>()) {}
     };
 
     struct DetectionData {
-        CameraData camera_data;
-        std::shared_ptr<std::vector<tensorflow::Object>> detections;
+        CameraData camera_data; 
 
-        TickType_t timestamp;
-        TickType_t inference_time;
+        tensorflow::Object detections[g_max_detections_per_inference]; // Array to hold detection results
+        uint8_t detection_count; // Actual number of valid detections
         
-        DetectionData() : detections(std::make_shared<std::vector<tensorflow::Object>>()) {}
+        TickType_t timestamp;   // timestamp of creation
+        TickType_t inference_time; // time taken for inference
+        
+        DetectionData() : detection_count(0) {}
     };
 
     struct DepthEstimationData {
-        // Simply reference the same detection data
-        DetectionData detection_data;
-        std::vector<float> depths;  // Each index corresponds to a detection index
-        TickType_t timestamp;
-        TickType_t depth_estimation_time;
+
+        DetectionData detection_data; // Detection data for depth estimation
+        float depths[g_max_detections_per_inference]; // Array to hold estimated depths for each detection
+
+        TickType_t timestamp; // timestamp of creation
+
+        TickType_t depth_estimation_time; // Time to perform depth estimation
     };
 
 

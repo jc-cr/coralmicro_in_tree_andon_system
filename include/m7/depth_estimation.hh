@@ -1,23 +1,17 @@
-// depth_estimation_task.hh
+// depth_estimation.hh
 #pragma once
-
 #include "third_party/freertos_kernel/include/FreeRTOS.h"
-#include "third_party/freertos_kernel/include/task.h"
-
-#include "tof_rgb_mapping.hh"
-
-#include "m7/m7_queues.hh"
-#include "global_config.hh"
-
-#include <algorithm>
+#include "libs/tensorflow/detection.h"
 #include <cmath>
 
 
 namespace coralmicro {
-
-    void depth_estimation(const DetectionData& detection_data, 
-        const VL53L8CX_ResultsData& tof_data,
-        DepthEstimationData& output_data);
-
+    // Only passing in the necessary data
+    void depth_estimation(
+        const tensorflow::Object* detections, // array of detections
+        const uint8_t detection_count,    // number of detections 
+        const int16_t* distance_mm,   //  array from ToF
+        const uint8_t tof_resolution,       // Current ToF resolution (4x4 or 8x8)
+        float* depths_out
+    );
 } // namespace coralmicro
-

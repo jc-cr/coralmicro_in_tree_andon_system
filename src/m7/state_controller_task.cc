@@ -32,8 +32,10 @@ namespace coralmicro{
             if (new_state == SystemState::SCANNING){
             // Check if a person has been detected in the latest detection data
             // this done by checking if detection_data.detections is not empty
-                if (xQueueReceive(g_detection_output_queue_m7, &detection_data, 3) == pdTRUE) {
-                    if (detection_data.detections && !detection_data.detections->empty()) {
+                if (xQueueReceive(g_detection_output_queue_m7, &detection_data, 10) == pdTRUE) {
+
+                    if (detection_data.detection_count > 0)
+                    {
                         // Person detected, change state to WARNING
                         new_state = SystemState::WARNING;
                     } 
@@ -44,10 +46,21 @@ namespace coralmicro{
             if (new_state == SystemState::WARNING){
                 printf("Checking for danger distance\r\n");
                 // Get the latest TOF data
-                if (xQueueReceive(g_tof_queue_m7, &tof_data, 3) == pdTRUE) {
+                if (xQueueReceive(g_tof_queue_m7, &tof_data, 10) == pdTRUE) {
 
-                    // Perfrom depth estimation
-                    depth_estimation(detection_data, tof_data, depth_estimation_data);
+                    // Perform depth estimation
+                    depth_estimation(
+                        detection_data.detections, 
+                        detection_data.detection_count, 
+                        tof_data.distance_mm, 
+                        g_tof_resolution, 
+                        depth_estimation_data.depths
+                    );
+
+                    printf("Depths for detections: ");
+                    for (uint8_t i = 0; i < detection_data.detection_count; i++) {
+                        printf("%f ", depth_estimation_data.depths[i]);
+                    }   
 
                     // TODO
 

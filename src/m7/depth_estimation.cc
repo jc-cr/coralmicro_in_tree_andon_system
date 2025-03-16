@@ -2,30 +2,25 @@
 #include "m7/depth_estimation.hh"
 
 namespace coralmicro {
-
-    void depth_estimation(const DetectionData& detection_data,
-        const VL53L8CX_ResultsData& tof_data,
-        DepthEstimationData& depth_estimation_data) {
-        // Check if detection data is valid
-        if (!detection_data.detections || detection_data.detections->empty()) {
-            printf("No detections available for depth estimation!\r\n");
+    void depth_estimation(
+        const tensorflow::Object* detections, // array of detections
+        const uint8_t detection_count,    // number of detections 
+        const int16_t* distance_mm,   //  array from ToF
+        const uint8_t tof_resolution,       // Current ToF resolution (4x4 or 8x8)
+        float* depths_out
+    ){
+        
+        // Check valid inputs
+        if (!detections || detection_count == 0 || !distance_mm || !depths_out) {
             return;
         }
-
-        // Simply copy the entire detection data struct
-        depth_estimation_data.detection_data = detection_data;
         
-        // Set timestamps
-        depth_estimation_data.timestamp = xTaskGetTickCount();
         
-        // Record start time for depth estimation
-        TickType_t start_time = xTaskGetTickCount();
-        
-        // Set placeholder depths - one per detection
-        depth_estimation_data.depths.push_back(0.0f);  // Initialize with zero depth
-        
-        depth_estimation_data.depth_estimation_time = xTaskGetTickCount() - start_time;
-        
+        // Process each detection
+        for (uint8_t i = 0; i < detection_count; i++) {
+            // Get depth value directly from the distance array
+            depths_out[i] = 2; // DEBUG: 2 is a placeholder, replace with actual logic to calculate depth from distance_mm }
+        }
     }
 
 } // namespace coralmicro
