@@ -49,13 +49,19 @@ namespace coralmicro {
     };
 
     struct DepthEstimationData {
-
-        DetectionData detection_data; // Detection data for depth estimation
         float depths[g_max_detections_per_inference]; // Array to hold estimated depths for each detection
 
         TickType_t timestamp; // timestamp of creation
 
         TickType_t depth_estimation_time; // Time to perform depth estimation
+    };
+
+    struct LoggingData {
+        TickType_t timestamp; // timestamp of creation
+        SystemState system_state; // Current system state
+
+        DetectionData detection_data; // Detection data
+        DepthEstimationData depth_estimation_data; // Depth estimation data
     };
 
 
@@ -74,18 +80,17 @@ namespace coralmicro {
     // Queue creation
     inline bool InitQueues() {
         g_tof_queue_m7 = xQueueCreate(1, sizeof(VL53L8CX_ResultsData));
-
         g_camera_queue_m7 = xQueueCreate(1, sizeof(CameraData));
 
         g_detection_output_queue_m7 = xQueueCreate(1, sizeof(DetectionData));
 
-
         g_state_update_queue_m7 = xQueueCreate(1, sizeof(SystemState));
+
+        g_logging_queue_m7 = xQueueCreate(1, sizeof(LoggingData));
+
 
         g_host_connection_status_queue_m7 = xQueueCreate(1, sizeof(HostConnectionStatus));
         g_host_state_queue_m7 = xQueueCreate(1, sizeof(HostState));
-
-
 
         
         return (g_tof_queue_m7 != nullptr && g_camera_queue_m7 != nullptr);

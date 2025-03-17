@@ -44,9 +44,6 @@ namespace coralmicro {
                     cell_region.x_min, cell_region.y_min, cell_region.x_max, cell_region.y_max
                 );
                 
-                // Debug: Print overlap result
-                printf("  Cell %2d: overlap=%u, should_overlap=%d\r\n", 
-                      cell_idx, overlap, should_overlap);
                 
                 // If there's an overlap, add the weighted depth value
                 if (overlap > 0) {
@@ -58,10 +55,6 @@ namespace coralmicro {
                         // Add weighted depth value (depth * overlap area)
                         total_weighted_depth += static_cast<float>(cell_depth_mm) * overlap;
                         total_overlap_area += overlap;
-                        printf("    Added to calculation: depth=%d mm, weight=%u\r\n", 
-                              cell_depth_mm, overlap);
-                    } else {
-                        printf("    Cell has invalid depth (%d mm), skipping\r\n", cell_depth_mm);
                     }
                 }
             }
@@ -69,13 +62,10 @@ namespace coralmicro {
             // Calculate final depth value
             if (total_overlap_area > 0) {
                 depths_out[i] = total_weighted_depth / total_overlap_area;
-                printf("DEBUG: Final depth for detection %d: %.3f mm (weighted average)\r\n", 
-                      i, depths_out[i]);
             }
             else {
                 // No valid overlap found, set a default value
                 depths_out[i] = -1.0f;  // Negative value indicates invalid measurement
-                printf("DEBUG: No valid overlaps for detection %d, returning -1.0\r\n", i);
             }
         }
     }
