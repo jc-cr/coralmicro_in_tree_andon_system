@@ -45,11 +45,19 @@ namespace coralmicro {
             return false;
         }
 
-        // Copy detections to the fixed array
+        // Copy detections to the fixed array and updated bounding box from normalized to camea dimmensions
         result->detection_count = 0;
         for (size_t i = 0; i < temp_results.size() && i < g_max_detections_per_inference; i++) {
+            // Convert normalized coordinates to camera dimensions
+            temp_results[i].bbox.xmin *= camera_data.width;
+            temp_results[i].bbox.xmax *= camera_data.width;
+            temp_results[i].bbox.ymin *= camera_data.height;
+            temp_results[i].bbox.ymax *= camera_data.height;
+
             result->detections[i] = temp_results[i];
             result->detection_count++;
+
+
         }
 
         return true;
@@ -148,6 +156,16 @@ namespace coralmicro {
                 if (detect_objects(&interpreter, camera_data, &detection_result)) {
                     // Success - detection_count already set in detect_objects
                     detection_result.inference_time = xTaskGetTickCount() - detection_result.timestamp;
+
+                    //DEBUG: Print out detections boudning boxes
+                    for (uint8_t i = 0; i < detection_result.detection_count; i++) {
+                        const auto& detection = detection_result.detections[i];
+                        printf("Detection %d: [%.2f, %.2f, %.2f, %.2f] (confidence: %.2f)\r\n",
+                            i, detection.bbox.xmin, detection.bbox.ymin,
+                            detection.bbox.xmax, detection.bbox.ymax,
+                            detection.score);
+                    }
+
                 } 
                 else {
                     // No detections or error

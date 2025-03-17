@@ -26,7 +26,7 @@ namespace coralmicro {
 
     bool detect_objects(tflite::MicroInterpreter* interpreter, 
                        const CameraData& camera_data,
-                       std::vector<tensorflow::Object>* results);
+                       DetectionData* detection_data);
 
     // Settings
     constexpr float kDetectionThreshold = 0.5f;

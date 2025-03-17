@@ -48,21 +48,25 @@ namespace coralmicro{
                 // Get the latest TOF data
                 if (xQueueReceive(g_tof_queue_m7, &tof_data, 10) == pdTRUE) {
 
+                    // Set depth estimation (DE) timestamp
+                    depth_estimation_data.timestamp = xTaskGetTickCount();
+
                     // Perform depth estimation
                     depth_estimation(
                         detection_data.detections, 
                         detection_data.detection_count, 
                         tof_data.distance_mm, 
-                        g_tof_resolution, 
                         depth_estimation_data.depths
                     );
+
+                    // Update depth estimation time
+                    depth_estimation_data.depth_estimation_time = xTaskGetTickCount() - depth_estimation_data.timestamp;
 
                     printf("Depths for detections: ");
                     for (uint8_t i = 0; i < detection_data.detection_count; i++) {
                         printf("%f ", depth_estimation_data.depths[i]);
                     }   
-
-                    // TODO
+                    printf("\r\n");
 
                 }
             }
