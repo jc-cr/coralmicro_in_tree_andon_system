@@ -29,5 +29,5 @@ namespace coralmicro {
                        DetectionData* detection_data);
 
     // Settings
-    constexpr float kDetectionThreshold = 0.5f;
+    constexpr float kDetectionThreshold = 0.55f;
 }

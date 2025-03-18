@@ -7,6 +7,7 @@
 // Task implementations
 #include "m7/camera_task.hh"
 #include "m7/inference_task.hh"
+#include "m7/rpc_task.hh"
 #include "m7/state_controller_task.hh"
 #include "m7/tof_task.hh"
 
@@ -50,6 +51,14 @@ constexpr TaskConfig kM7TaskConfigs[] = {
     {
         state_controller_task,
         "State_Controller_Task",
+        STACK_SIZE_LARGE,
+        0,
+        TASK_PRIORITY_MEDIUM,
+        nullptr
+    },
+    {
+        rpc_task,
+        "RPC_Task",
         STACK_SIZE_LARGE,
         0,
         TASK_PRIORITY_MEDIUM,

@@ -47,22 +47,37 @@ namespace coralmicro {
     }
     
     // Transmit logging data to host with improved error handling
+
+
     void tx_logs_to_host(struct jsonrpc_request* request) {
-        // Get the current logging data
-        LoggingData logging_data;
-        if (xQueuePeek(g_logging_queue_m7, &logging_data, 0) != pdTRUE) {
-            // If no logging data available, return an error
+        // Static instance to hold the data
+        static LoggingData logging_data;
+
+        if (xQueueReceive(g_logging_queue_m7, &logging_data, 0) != pdTRUE) {
             jsonrpc_return_error(request, -1, "No logging data available", NULL);
             return;
         }
         
-        // Return the logging data with clean formatting
+        // Calculate actual bytes needed for detection and depth data
+        size_t detection_bytes = logging_data.detection_data.detection_count * sizeof(tensorflow::Object);
+        size_t depth_bytes = logging_data.detection_data.detection_count * sizeof(float);
+        
+        // Build response with all the components
         jsonrpc_return_success(request, 
-            "{%Q:%d}",
-            "state", static_cast<int>(logging_data.state)
+            "{%Q: %d, %Q: %d, %Q: %d, %Q: %d, %Q: %d, %Q: %V, %Q: %V, %Q: %d, %Q: %d, %Q: %V}",
+            "timestamp", logging_data.timestamp,
+            "system_state", static_cast<int>(logging_data.system_state),
+            "detection_count", logging_data.detection_data.detection_count,
+            "inference_time", logging_data.detection_data.inference_time,
+            "depth_estimation_time", logging_data.depth_estimation_data.depth_estimation_time,
+            "detections", detection_bytes, logging_data.detection_data.detections,
+            "depths", depth_bytes, logging_data.depth_estimation_data.depths,
+            "cam_width", logging_data.detection_data.camera_data.width,
+            "cam_height", logging_data.detection_data.camera_data.height,
+            "image_data", logging_data.detection_data.camera_data.image_data->size(),  logging_data.detection_data.camera_data.image_data->data()
         );
     }
-    
+
     // RPC task - only responsible for setting up RPC server and callbacks
     void rpc_task(void* parameters) {
         (void)parameters;
