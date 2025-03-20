@@ -5,6 +5,7 @@
 
 namespace coralmicro {
 
+
 // Number of TOF cells
 constexpr size_t kTofCellCount = 16;  // 4x4 grid
 
@@ -57,5 +58,14 @@ inline constexpr uint32_t overlap_area(
     uint16_t overlap_height = std::min(y1_max, y2_max) - std::max(y1_min, y2_min) + 1;
     return overlap_width * overlap_height;
 }
+
+
+// Array of weights derived from 1/RMSE for each ToF cell
+constexpr float kTofCellWeights[kTofCellCount] = {
+    0.026560039632225464, 0.03578043985076423, 0.05877272030233332, 0.053409676893264986,
+    0.0336233746386417, 0.05665395914212506, 0.09242567391845684, 0.07471508800373368,
+    0.05203502072337418, 0.12785025843714812, 0.1515337332020738, 0.04690903406621854,
+    0.03830524464203079, 0.08342581187853154, 0.05064693056828055, 0.01735299410079727
+};
 
 }  // namespace coralmicro

@@ -24,7 +24,7 @@ namespace coralmicro {
     inline char const* g_model_path = "/apps/coralmicro_in_tree_andon_system/models/tf2_ssd_mobilenet_v2_coco17_ptq_edgetpu.tflite";
 
     // Inference config
-    constexpr uint8_t g_max_detections_per_inference = 3;  // Max number of detection
+    constexpr uint8_t g_max_detections_per_inference = 1;  // Max number of detection
 
     // TPU context (global to keep alive between tasks)
     inline EdgeTpuManager* g_tpu_manager_singleton = nullptr;
