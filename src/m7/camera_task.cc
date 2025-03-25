@@ -60,7 +60,8 @@ void camera_task(void* parameters) {
         };
 
         if (CameraTask::GetSingleton()->GetFrame({fmt})) {
-            camera_data.timestamp = xTaskGetTickCount();
+            camera_data.timestamp_ms =  xTaskGetTickCount() * (1000/configTICK_RATE_HZ);
+
             camera_data.image_data = current_buffer;  // Assign current buffer
             
             // Send to queue

@@ -143,11 +143,19 @@ namespace coralmicro {
         int Hz = 10;
         const TickType_t inference_period = pdMS_TO_TICKS(1000 / Hz);
         TickType_t last_wake_time = xTaskGetTickCount();
+
+
+        TickType_t detection_start_tick;
+        TickType_t detection_stop_tick;
+
         
         while (true) {
             // Try to receive camera data
+
             if (xQueueReceive(g_camera_queue_m7, &camera_data, 0) == pdTRUE) {
-                detection_result.timestamp = xTaskGetTickCount();
+
+                detection_start_tick = xTaskGetTickCount();
+                detection_result.timestamp_ms = detection_start_tick * (1000 / configTICK_RATE_HZ);
 
                 // Copy camera data to detection result
                 detection_result.camera_data = camera_data;
@@ -155,7 +163,10 @@ namespace coralmicro {
                 // Perform detection
                 if (detect_objects(&interpreter, camera_data, &detection_result)) {
                     // Success - detection_count already set in detect_objects
-                    detection_result.inference_time = xTaskGetTickCount() - detection_result.timestamp;
+                    detection_stop_tick = xTaskGetTickCount() - detection_start_tick;
+
+                    // Time taken for inference
+                    detection_result.inference_time_ms = detection_stop_tick * (1000 / configTICK_RATE_HZ);
 
                     //DEBUG: Print out detections boudning boxes
                     for (uint8_t i = 0; i < detection_result.detection_count; i++) {
@@ -168,9 +179,12 @@ namespace coralmicro {
 
                 } 
                 else {
+                    detection_stop_tick = xTaskGetTickCount() - detection_start_tick;
+
                     // No detections or error
                     detection_result.detection_count = 0;
-                    detection_result.inference_time = xTaskGetTickCount() - detection_result.timestamp;
+                    detection_result.inference_time_ms = detection_stop_tick * (1000 / configTICK_RATE_HZ);
+
                 }
                 
                 // Send results to queue regardless of detection success

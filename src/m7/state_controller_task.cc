@@ -21,6 +21,10 @@ namespace coralmicro{
         static LoggingData logging_data;
 
         SystemState new_state = current_state;
+
+
+        TickType_t depth_estimation_start_tick;
+        TickType_t depth_estimation_stop_tick;
         
         while (true) {
             // Default next state is current state
@@ -50,7 +54,9 @@ namespace coralmicro{
                 if (xQueueReceive(g_tof_queue_m7, &tof_data, 10) == pdTRUE) {
 
                     // Set depth estimation (DE) timestamp
-                    depth_estimation_data.timestamp = xTaskGetTickCount();
+                    depth_estimation_start_tick = xTaskGetTickCount();
+
+                    depth_estimation_data.timestamp_ms = depth_estimation_start_tick * (1000 / configTICK_RATE_HZ);
 
                     // Perform depth estimation
                     depth_estimation(
@@ -61,7 +67,10 @@ namespace coralmicro{
                     );
 
                     // Update depth estimation time
-                    depth_estimation_data.depth_estimation_time = xTaskGetTickCount() - depth_estimation_data.timestamp;
+                    depth_estimation_stop_tick = xTaskGetTickCount() - depth_estimation_start_tick;
+
+
+                    depth_estimation_data.depth_estimation_time_ms = depth_estimation_stop_tick * (1000 / configTICK_RATE_HZ);
 
                     printf("Depths for detections: ");
                     for (uint8_t i = 0; i < detection_data.detection_count; i++) {
@@ -91,7 +100,7 @@ namespace coralmicro{
             }
 
             // Output logging data structure to queue
-            logging_data.timestamp = xTaskGetTickCount();
+            logging_data.timestamp_ms = xTaskGetTickCount() * (1000 / configTICK_RATE_HZ);
             logging_data.system_state = current_state;
             logging_data.detection_data = detection_data;
             logging_data.depth_estimation_data = depth_estimation_data;

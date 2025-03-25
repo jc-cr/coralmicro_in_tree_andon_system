@@ -26,38 +26,41 @@ extern "C" {
 namespace coralmicro {
 
     struct CameraData {
+        TickType_t timestamp_ms; // timestamp_ms of creation (ms)
+
         uint32_t width; 
         uint32_t height;
         CameraFormat format; // kRGB, kYUV, etc.
-
-        TickType_t timestamp; // timestamp of creation
 
         std::shared_ptr<std::vector<uint8_t>> image_data; // Shared pointer to image data buffer
         CameraData() : image_data(std::make_shared<std::vector<uint8_t>>()) {}
     };
 
     struct DetectionData {
-        CameraData camera_data; 
+        TickType_t timestamp_ms;   // timestamp_ms of creation (ms)
 
         tensorflow::Object detections[g_max_detections_per_inference]; // Array to hold detection results
         uint8_t detection_count; // Actual number of valid detections
         
-        TickType_t timestamp;   // timestamp of creation
-        TickType_t inference_time; // time taken for inference
+        TickType_t inference_time_ms; // time taken for inference
+
+        CameraData camera_data; 
         
         DetectionData() : detection_count(0) {}
     };
 
+
     struct DepthEstimationData {
+        TickType_t timestamp_ms; // timestamp_ms of creation (ms)
+
         float depths[g_max_detections_per_inference]; // Array to hold estimated depths for each detection
 
-        TickType_t timestamp; // timestamp of creation
-
-        TickType_t depth_estimation_time; // Time to perform depth estimation
+        TickType_t depth_estimation_time_ms; // Time taken for depth estimation (ms)
     };
 
     struct LoggingData {
-        TickType_t timestamp; // timestamp of creation
+        TickType_t timestamp_ms; // timestamp_ms of creation
+
         SystemState system_state; // Current system state
 
         DetectionData detection_data; // Detection data

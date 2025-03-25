@@ -64,14 +64,15 @@ namespace coralmicro {
         
         // Build response with all the components
         jsonrpc_return_success(request, 
-            "{%Q: %d, %Q: %d, %Q: %d, %Q: %d, %Q: %d, %Q: %V, %Q: %V, %Q: %d, %Q: %d, %Q: %V}",
-            "timestamp", logging_data.timestamp,
+            "{%Q: %d, %Q: %d, %Q: %d, %Q: %d, %Q: %d, %Q: %V, %Q: %V, %Q: %d, %Q: %d, %Q: %d, %Q: %V}",
+            "log_timestamp_ms", logging_data.timestamp_ms,
             "system_state", static_cast<int>(logging_data.system_state),
             "detection_count", logging_data.detection_data.detection_count,
-            "inference_time", logging_data.detection_data.inference_time,
-            "depth_estimation_time", logging_data.depth_estimation_data.depth_estimation_time,
+            "inference_time_ms", logging_data.detection_data.inference_time_ms,
+            "depth_estimation_time_ms", logging_data.depth_estimation_data.depth_estimation_time_ms,
             "detections", detection_bytes, logging_data.detection_data.detections,
             "depths", depth_bytes, logging_data.depth_estimation_data.depths,
+            "image_capture_timestamp_ms", logging_data.detection_data.camera_data.timestamp_ms,
             "cam_width", logging_data.detection_data.camera_data.width,
             "cam_height", logging_data.detection_data.camera_data.height,
             "image_data", logging_data.detection_data.camera_data.image_data->size(),  logging_data.detection_data.camera_data.image_data->data()
