@@ -78,11 +78,25 @@ namespace coralmicro {
                                 SendColor(255, 0, 0);
                             }
                             break;
-                            
-                        default:
-                            // Default to BLUE for all other states
+
+                        case SystemState::IDLE:
+                            // BLUE for IDLE
                             for (int i = 0; i < 3; i++) {
                                 SendColor(0, 0, 255);
+                            }
+                            break;
+
+                        case SystemState::ACTIVE:
+                            // GREEN for ACTIVE
+                            for (int i = 0; i < 3; i++) {
+                                SendColor(0, 255, 0);
+                            }
+                            break;
+                            
+                        default:
+                            // Default to WHITE for other states
+                            for (int i = 0; i < 3; i++) {
+                                SendColor(255, 255, 255);
                             }
                             break;
                     }
