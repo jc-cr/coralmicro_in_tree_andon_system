@@ -49,7 +49,6 @@ namespace coralmicro {
         DetectionData() : detection_count(0) {}
     };
 
-
     struct DepthEstimationData {
         TickType_t timestamp_ms; // timestamp_ms of creation (ms)
 
@@ -67,13 +66,15 @@ namespace coralmicro {
         DepthEstimationData depth_estimation_data; // Depth estimation data
     };
 
-
     // Queue handles
     inline QueueHandle_t g_tof_queue_m7;      // Latest TOF frame
+
     inline QueueHandle_t g_camera_queue_m7;   // Latest camera frame
+
     inline QueueHandle_t g_detection_output_queue_m7; // Detection results
 
     inline QueueHandle_t g_state_update_queue_m7; // State updates
+
     inline QueueHandle_t g_host_connection_status_queue_m7; // Host condition updates
     inline QueueHandle_t g_host_state_queue_m7; // Host state updates
 
@@ -91,8 +92,8 @@ namespace coralmicro {
 
         g_logging_queue_m7 = xQueueCreate(1, sizeof(LoggingData));
 
-
         g_host_connection_status_queue_m7 = xQueueCreate(1, sizeof(HostConnectionStatus));
+
         g_host_state_queue_m7 = xQueueCreate(1, sizeof(HostState));
 
         

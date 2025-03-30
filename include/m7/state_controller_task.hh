@@ -17,4 +17,6 @@ namespace coralmicro {
 
     // Timeout limit in ticks - 3 seconds (assuming 1ms tick rate)
     constexpr TickType_t kValidConnectionLimitTicks = pdMS_TO_TICKS(3000); 
+
+    constexpr float danger_depth_mm = 300.0f; // Danger distance in mm
 }

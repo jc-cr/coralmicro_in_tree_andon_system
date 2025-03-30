@@ -29,6 +29,4 @@ namespace coralmicro {
     // TPU context (global to keep alive between tasks)
     inline EdgeTpuManager* g_tpu_manager_singleton = nullptr;
 
-    // Danger depth
-    inline std::atomic<float> g_danger_depth{1000.0f};  // Default to 1m
 }
