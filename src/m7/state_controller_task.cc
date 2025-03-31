@@ -132,6 +132,8 @@ namespace coralmicro{
         }
     }
 
+    
+
     void state_logic_host_disconnected(SystemState& current_state, SystemState& new_state, 
                                      DetectionData& detection_data, DepthEstimationData& depth_estimation_data, 
                                      VL53L8CX_ResultsData& tof_data, LoggingData& logging_data,
@@ -288,6 +290,8 @@ namespace coralmicro{
         }
     }
 
+
+
     void state_controller_task(void* parameters) {
         (void)parameters;
         printf("State controller task starting...\r\n");
@@ -313,13 +317,30 @@ namespace coralmicro{
         // Add timestamps for detection and TOF memory
         static TickType_t last_detection_tick = 0;
         static TickType_t last_tof_tick = 0;
+
+        // Add timestampe for host connection heartbeat
+        // When timer runs out, it will set the host_condition to DISCONNECTED
+        static TickType_t last_host_tick = 0;
         
         while (true) {
             // Always start with HOST_READING as per the diagram
             SystemState new_state = SystemState::HOST_READING;
             
             // Update to latest host connection status
-            xQueueReceive(g_host_connection_status_queue_m7, &host_condition, 0);
+            if(xQueueReceive(g_host_connection_status_queue_m7, &host_condition, 0) == pdTRUE) {
+                // Reset the host connection timer
+                last_host_tick = xTaskGetTickCount();
+            } 
+            else {
+                if ((xTaskGetTickCount() - last_host_tick) <= pdMS_TO_TICKS(kHostConnectionTimeoutMs)) {
+                    // Host connection is still valid
+                    host_condition = HostConnectionStatus::CONNECTED;
+                } 
+                else {
+                    // Host connection timed out
+                    host_condition = HostConnectionStatus::DISCONNECTED;
+                }
+            }
 
             // If host connected, do host connection logic
             if (host_condition == HostConnectionStatus::CONNECTED) {

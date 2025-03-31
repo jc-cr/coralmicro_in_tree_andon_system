@@ -21,6 +21,7 @@ namespace coralmicro {
     // Add detection memory timeouts
     constexpr TickType_t kDetectionMemoryTimeoutMs = 1000;  // 1 second memory for detections
     constexpr TickType_t kTofMemoryTimeoutMs = 1000;        // 1 second memory for TOF data
+    constexpr TickType_t kHostConnectionTimeoutMs = 3000; // 3 seconds memory for host connection
 
-    constexpr float danger_depth_mm = 300.0f; // Danger distance in mm
+    constexpr float danger_depth_mm = 600.0f; // Danger distance in mm
 }
