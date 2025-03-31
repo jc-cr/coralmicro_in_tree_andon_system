@@ -56,12 +56,17 @@ namespace coralmicro {
                 }
                 else
                 {
+
+                    // Set delay for new led instructiosn
+                    ResetDelay();
+
                     // Send same color to all three LEDs
                     switch (new_state) {
                         case SystemState::UNINITIALIZED:
                             // WHITE for UNINITIALIZED
                             for (int i = 0; i < 3; i++) {
                                 SendColor(255, 255, 255);
+
                             }
                             break;
                             
@@ -100,6 +105,7 @@ namespace coralmicro {
                             }
                             break;
                     }
+
                     
                     // Update current state after change
                     current_state = new_state;

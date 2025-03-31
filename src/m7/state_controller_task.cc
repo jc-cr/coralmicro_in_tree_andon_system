@@ -2,9 +2,6 @@
 
 namespace coralmicro{
 
-    // Add detection memory timeouts
-    constexpr TickType_t kDetectionMemoryTimeoutMs = 1000;  // 1 second memory for detections
-    constexpr TickType_t kTofMemoryTimeoutMs = 1000;        // 1 second memory for TOF data
 
     void state_logic_host_connected(HostState& host_state, 
         SystemState& current_state, 
@@ -58,10 +55,8 @@ namespace coralmicro{
             new_detection_received = true;
             if (detection_data.detection_count > 0) {
                 last_detection_tick = current_tick; // Update detection timestamp
-                printf("New detection received, count: %d\r\n", detection_data.detection_count);
             }
             else {
-                printf("Received frame with no detections\r\n");
             }
         }
         else {
@@ -69,9 +64,7 @@ namespace coralmicro{
             bool detection_valid = (current_tick - last_detection_tick) <= pdMS_TO_TICKS(kDetectionMemoryTimeoutMs);
             
             if (detection_valid && detection_data.detection_count > 0) {
-                printf("Using cached detection data (age: %lu ms, count: %d)\r\n", 
-                        (current_tick - last_detection_tick) * (1000 / configTICK_RATE_HZ),
-                        detection_data.detection_count);
+                // use cached detection data
             }
         }
 
@@ -110,12 +103,8 @@ namespace coralmicro{
                 
                 if (tof_valid) {
                     // Use cached TOF data for decisions
-                    printf("Using cached TOF data (age: %lu ms)\r\n", 
-                           (current_tick - last_tof_tick) * (1000 / configTICK_RATE_HZ));
-                    // We're using cached depth estimation results here
                 }
                 else {
-                    printf("No valid TOF data available\r\n");
                 }
             }
 
@@ -164,7 +153,6 @@ namespace coralmicro{
             if (detection_data.detection_count > 0) {
                 // Person detected
                 last_detection_tick = current_tick; // Update detection timestamp
-                printf("New detection received, count: %d\r\n", detection_data.detection_count);
                 
                 // Now we need to check if the person is in danger distance
                 // to determine if we go to WARNING or STOPPED state
@@ -206,8 +194,6 @@ namespace coralmicro{
                     
                     if (tof_valid) {
                         // Use cached TOF data for decisions
-                        printf("Using cached TOF data (age: %lu ms)\r\n", 
-                               (current_tick - last_tof_tick) * (1000 / configTICK_RATE_HZ));
                         
                         // Check cached depth estimations for danger distance
                         for (uint8_t i = 0; i < detection_data.detection_count; i++) {
@@ -217,7 +203,6 @@ namespace coralmicro{
                         }
                     }
                     else {
-                        printf("No valid TOF data available\r\n");
                     }
                 }
 
@@ -243,9 +228,6 @@ namespace coralmicro{
             
             if (detection_valid && detection_data.detection_count > 0) {
                 // We still have a valid detection
-                printf("Using cached detection data (age: %lu ms, count: %d)\r\n", 
-                       (current_tick - last_detection_tick) * (1000 / configTICK_RATE_HZ),
-                       detection_data.detection_count);
                 
                 // Check if person is in danger distance using cached data
                 bool person_in_danger = false;
@@ -255,9 +237,6 @@ namespace coralmicro{
                 
                 if (tof_valid) {
                     // Use cached TOF data for decisions
-                    printf("Using cached TOF data (age: %lu ms)\r\n", 
-                           (current_tick - last_tof_tick) * (1000 / configTICK_RATE_HZ));
-                    
                     // Check cached depth estimations for danger distance
                     for (uint8_t i = 0; i < detection_data.detection_count; i++) {
                         if (depth_estimation_data.depths[i] <= danger_depth_mm) {
@@ -275,7 +254,6 @@ namespace coralmicro{
                 else {
                     // No valid TOF data, assume WARNING state
                     new_state = SystemState::WARNING;
-                    printf("No valid TOF data available\r\n");
                 }
             }
             else {

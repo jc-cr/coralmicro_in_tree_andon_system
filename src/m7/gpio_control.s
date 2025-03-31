@@ -23,6 +23,7 @@
 //  we can do at 6,000 μs (6 ms) @ 800MHz = 4,800,000 cycles
 //  After trying, can confirm that 6ms is enough to reset the LED
 // In our code we want to aim for the lower range of the timings to be safe
+
 _ZN10coralmicro7SendBitEb:
     // r0 contains the bit value (0 or 1)
     push {r4-r6, lr}

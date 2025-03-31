@@ -3,9 +3,48 @@
 namespace coralmicro {
 
     // Receive heartbeat from host and update host condition
-    void rx_from_host(struct jsonrpc_request* request) {
+    void host_heartbeat(struct jsonrpc_request* request) {
+        // Extract host state from request as an integer (mjson_get_bool requires int)
+        int host_connection_check;
+        
+        // Safely parse parameters using mjson with proper error handling
+        if (request->params == nullptr) {
+            JsonRpcReturnBadParam(request, "Missing parameters", "connected");
+            return;
+        }
+        
+        // Get parameter length for safe handling
+        size_t params_len = strlen(request->params);
+        
+        // Parse the 'connected' parameter (not 'host_state')
+        if (mjson_get_bool(request->params, params_len, "$.connected", &host_connection_check)) {
+        } 
+        else {
+            JsonRpcReturnBadParam(request, "Missing or invalid connected parameter", "connected");
+            return;
+        }
+        
+        if (host_connection_check != 0) {
+            // Set host condition to CONNECTED and send to state controller via queue
+            HostConnectionStatus new_condition = HostConnectionStatus::CONNECTED;
+
+            if (xQueueOverwrite(g_host_connection_status_queue_m7, &new_condition) != pdTRUE) {
+                jsonrpc_return_error(request, -1, "Failed to update host condition", NULL);
+                return;
+            }
+            
+            // Return a clean success response
+            jsonrpc_return_success(request, "{}");
+        }
+        else {
+            jsonrpc_return_error(request, -1, "Invalid connection check value", NULL);
+            return;
+        }
+    }
+
+    void rx_host_state(struct jsonrpc_request* request) {
         // Extract host state from request as an integer
-        int host_connection_check = 0;
+        double host_state_double;
         
         // Safely parse parameters using mjson with proper error handling
         if (request->params == nullptr) {
@@ -16,39 +55,28 @@ namespace coralmicro {
         // Get parameter length for safe handling
         size_t params_len = strlen(request->params);
         
-        // Extract host_state parameter with proper boundary checking
-        double value = 0;
-        if (mjson_get_number(request->params, params_len, "$.host_state", &value)) {
-            host_connection_check = (int)value;
-            printf("Parsed host_state value: %d\r\n", host_connection_check);
-        } else {
-            JsonRpcReturnBadParam(request, "Missing or invalid host_state parameter", "host_state");
-            return;
-        }
-        
-        // Only continue if connection check is not 0
-        if (host_connection_check != 0) {
-            // Set host condition to CONNECTED and send to state controller via queue
-            HostConnectionStatus new_condition = HostConnectionStatus::CONNECTED;
-            if (xQueueOverwrite(g_host_connection_status_queue_m7, &new_condition) != pdTRUE) {
-                jsonrpc_return_error(request, -1, "Failed to update host condition", NULL);
+        if (mjson_get_number(request->params, params_len, "$.host_state", &host_state_double)) {
+            // Convert double to int to properly interpret as enum
+            int host_state_int = static_cast<int>(host_state_double);
+            HostState host_state_enum = static_cast<HostState>(host_state_int);
+            
+            printf("Parsed host_state value: %d (%f)\r\n", host_state_int, host_state_double);
+            
+            // Send the properly converted host state to the state controller via queue
+            if (xQueueOverwrite(g_host_state_queue_m7, &host_state_enum) != pdTRUE) {
+                jsonrpc_return_error(request, -1, "Failed to update host state", NULL);
                 return;
             }
             
             // Return a clean success response
             jsonrpc_return_success(request, "{}");
-        }
-
-        else{
-            jsonrpc_return_error(request, -1, "Invalid connection check value", NULL);
-            
+        } 
+        else {
+            JsonRpcReturnBadParam(request, "Missing or invalid host_state parameter", "host_state");
             return;
         }
     }
     
-    // Transmit logging data to host with improved error handling
-
-
     void tx_logs_to_host(struct jsonrpc_request* request) {
         // Static instance to hold the data
         static LoggingData logging_data;
@@ -94,8 +122,12 @@ namespace coralmicro {
         
         // Initialize RPC server
         jsonrpc_init(nullptr, nullptr);
+
+        // Register RPC methods
+        jsonrpc_export("host_heartbeat", host_heartbeat);
+        jsonrpc_export("rx_host_state", rx_host_state);
         jsonrpc_export("tx_logs_to_host", tx_logs_to_host);
-        jsonrpc_export("rx_from_host", rx_from_host);
+
         
         // Create HTTP server
         auto server = new JsonRpcHttpServer();
